@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <rect width="800" height="600" fill="#0f172a"/>
+  <rect x="60" y="70" width="680" height="390" rx="18" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <!-- 4 Common Rail Injectors -->
+  <g transform="translate(150,120)">
+    <g transform="translate(0,0)">
+      <rect x="20" y="0" width="44" height="36" rx="6" fill="#f59e0b"/>
+      <rect x="28" y="36" width="28" height="120" rx="4" fill="#cbd5e1"/>
+      <rect x="35" y="156" width="14" height="75" rx="3" fill="#64748b"/>
+      <polygon points="39,231 45,231 42,250" fill="#f59e0b"/>
+      <rect x="12" y="260" width="60" height="12" rx="4" fill="#10b981"/>
+    </g>
+    <g transform="translate(135,0)">
+      <rect x="20" y="0" width="44" height="36" rx="6" fill="#f59e0b"/>
+      <rect x="28" y="36" width="28" height="120" rx="4" fill="#cbd5e1"/>
+      <rect x="35" y="156" width="14" height="75" rx="3" fill="#64748b"/>
+      <polygon points="39,231 45,231 42,250" fill="#f59e0b"/>
+      <rect x="12" y="260" width="60" height="12" rx="4" fill="#10b981"/>
+    </g>
+    <g transform="translate(270,0)">
+      <rect x="20" y="0" width="44" height="36" rx="6" fill="#f59e0b"/>
+      <rect x="28" y="36" width="28" height="120" rx="4" fill="#cbd5e1"/>
+      <rect x="35" y="156" width="14" height="75" rx="3" fill="#64748b"/>
+      <polygon points="39,231 45,231 42,250" fill="#f59e0b"/>
+      <rect x="12" y="260" width="60" height="12" rx="4" fill="#10b981"/>
+    </g>
+    <g transform="translate(405,0)">
+      <rect x="20" y="0" width="44" height="36" rx="6" fill="#f59e0b"/>
+      <rect x="28" y="36" width="28" height="120" rx="4" fill="#cbd5e1"/>
+      <rect x="35" y="156" width="14" height="75" rx="3" fill="#64748b"/>
+      <polygon points="39,231 45,231 42,250" fill="#f59e0b"/>
+      <rect x="12" y="260" width="60" height="12" rx="4" fill="#10b981"/>
+    </g>
+  </g>
+  <text x="400" y="510" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#f8fafc">INJETORES COMMON RAIL • CODIFICAÇÃO IMA</text>
+  <text x="400" y="542" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" fill="#fbbf24">Teste Eletrónico • Ultrassons • Reconstrução</text>
+</svg>

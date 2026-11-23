@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bgPump" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgPump)"/>
+  <circle cx="400" cy="290" r="200" fill="#f59e0b" opacity="0.08"/>
+  <g transform="translate(210,130)">
+    <!-- Common Rail / Rotary Fuel Injection Pump -->
+    <rect x="70" y="110" width="230" height="150" rx="18" fill="url(#steel)" stroke="#cbd5e1" stroke-width="3"/>
+    <rect x="20" y="145" width="55" height="80" rx="8" fill="#64748b" stroke="#cbd5e1" stroke-width="2"/>
+    <circle cx="185" cy="185" r="46" fill="#334155" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="185" cy="185" r="18" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+    <!-- High pressure outlets -->
+    <rect x="115" y="55" width="24" height="55" rx="4" fill="#94a3b8"/>
+    <rect x="173" y="45" width="24" height="65" rx="4" fill="#94a3b8"/>
+    <rect x="231" y="55" width="24" height="55" rx="4" fill="#94a3b8"/>
+    <path d="M 127 55 C 127 10, 80 10, 60 35" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 185 45 C 185 0, 185 0, 185 -15" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 243 55 C 243 10, 290 10, 315 35" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <rect x="300" y="140" width="60" height="90" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="2.5"/>
+  </g>
+  <text x="400" y="510" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#f8fafc">BOMBAS INJETORAS • BANCADA DE TESTE</text>
+  <text x="400" y="542" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" fill="#fbbf24">Bosch • Delphi • Denso • Stanadyne</text>
+</svg>

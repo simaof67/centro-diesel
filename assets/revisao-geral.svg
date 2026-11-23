@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <rect width="800" height="600" fill="#0f172a"/>
+  <g transform="translate(180,150)">
+    <rect x="0" y="235" width="440" height="18" rx="4" fill="#475569"/>
+    <path d="M 40 165 L 85 110 L 235 95 L 340 112 L 405 148 L 415 186 L 35 186 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="105" cy="190" r="32" fill="#0f172a" stroke="#e2e8f0" stroke-width="5"/>
+    <circle cx="335" cy="190" r="32" fill="#0f172a" stroke="#e2e8f0" stroke-width="5"/>
+    <circle cx="105" cy="190" r="10" fill="#f59e0b"/>
+    <circle cx="335" cy="190" r="10" fill="#f59e0b"/>
+  </g>
+  <text x="400" y="505" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#f8fafc">SERVIÇOS RÁPIDOS AUTO</text>
+  <text x="400" y="538" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" fill="#fbbf24">Revisões • Óleo &amp; Filtros • Distribuição • DPF</text>
+</svg>
