@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centro Diesel — Área do Dono, Tabela de Preços &amp; Escritório</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-slate-100 text-slate-900 antialiased">
+
+  <!-- OWNER PIN LOCK OVERLAY -->
+  <div id="owner-pin-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-7 text-center text-white shadow-2xl space-y-5">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg">
+        CD
+      </div>
+      <div>
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Acesso Reservado</div>
+        <h1 class="text-xl font-extrabold mt-1">Área do Dono &amp; Escritório</h1>
+        <p class="text-xs text-slate-400 mt-1">Introduza o PIN para editar preços, configurar a IA e gerir a oficina.</p>
+      </div>
+      <form id="form-pin-unlock" class="space-y-3">
+        <input id="pin-input" type="password" inputmode="numeric" maxlength="10" placeholder="PIN (padrão: 1234)" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-center text-lg font-extrabold tracking-widest text-amber-400 focus:border-amber-500 focus:outline-none" autofocus />
+        <div id="pin-error" class="hidden text-xs text-rose-400 font-semibold">PIN incorreto. Tente novamente (padrão: 1234).</div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition">
+          Entrar no Painel do Dono
+        </button>
+      </form>
+      <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span>PIN padrão: <strong class="text-slate-200">1234</strong></span>
+        <a href="index.html" class="text-amber-400 hover:underline font-semibold">&larr; Voltar ao Site Cliente</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN OWNER APPLICATION SHELL -->
+  <div id="app-shell" class="min-h-screen flex flex-col lg:flex-row">
+
+    <!-- MOBILE HEADER -->
+    <header class="lg:hidden bg-slate-950 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-sm">CD</div>
+        <div>
+          <div class="font-bold text-sm leading-tight">Centro Diesel — Dono</div>
+          <div class="text-[11px] text-amber-400">Gestão de Preços &amp; IA</div>
+        </div>
+      </div>
+      <button id="btn-mobile-menu" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="hidden lg:flex lg:flex-col w-72 bg-slate-950 text-slate-200 shrink-0 border-r border-slate-800 fixed lg:sticky top-0 left-0 h-screen z-40 overflow-y-auto">
+      <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-lg shadow-lg">
+            CD
+          </div>
+          <div>
+            <h1 class="font-extrabold text-white text-base tracking-tight leading-tight">CENTRO DIESEL</h1>
+            <p class="text-[11px] text-amber-400 font-semibold leading-tight mt-0.5">Painel Privado do Dono</p>
+          </div>
+        </div>
+        <button id="btn-close-mobile-menu" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Link to Client Site -->
+      <div class="p-4 border-b border-slate-800/80 bg-slate-900/60 space-y-2">
+        <a href="index.html" target="_blank" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow transition">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          Abrir Site do Cliente
+        </a>
+        <div class="text-[11px] text-slate-400 text-center">Tudo o que editar aqui aparece no Site do Cliente e na IA.</div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 py-4 space-y-1">
+        <div class="px-4 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Controlo do Dono</div>
+
+        <button data-tab="prices" class="nav-item active w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-left hover:bg-slate-900">
+          <span class="flex items-center gap-3">
+            <i data-lucide="tags" class="w-4 h-4"></i>
+            Preços &amp; Regras da IA
+          </span>
+          <span id="nav-badge-services" class="px-2 py-0.5 text-[11px] rounded-full bg-amber-500/20 text-amber-300 font-semibold">13</span>
+        </button>
+
+        <button data-tab="assistant" class="nav-item w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-left hover:bg-slate-900">
+          <span class="flex items-center gap-3">
+            <i data-lucide="phone-call" class="w-4 h-4"></i>
+            Central Telefónica IA
+          </span>
+          <span id="nav-badge-calls" class="px-2 py-0.5 text-[11px] rounded-full bg-slate-800 text-slate-300 font-semibold">0</span>
+        </button>
+
+        <div class="px-4 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Escritório &amp; Balcão</div>
+
+        <button data-tab="dashboard" class="nav-item w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-left hover:bg-slate-900">
+          <span class="flex items-center gap-3">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            Painel de Escritório
+          </span>
+        </button>
+
+        <button data-tab="office" class="nav-item w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-left hover:bg-slate-900">
+          <span class="flex items-center gap-3">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+            Secretaria &amp; Orçamentos
+          </span>
+          <span id="nav-badge-wo" class="px-2 py-0.5 text-[11px] rounded-full bg-blue-500/20 text-blue-300 font-semibold">0</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-4 border-t border-slate-800 space-y-2 bg-slate-900/40">
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>Regime IVA (Açores):</span>
+          <span id="sidebar-iva-badge" class="font-bold text-amber-400">16%</span>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>Motor Assistente:</span>
+          <span id="sidebar-engine-badge" class="font-semibold text-emerald-400">Local IA</span>
+        </div>
+        <button id="btn-open-settings" class="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
+          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+          Definições, PIN, Gemini &amp; Dados
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- TOPBAR -->
+      <div class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30">
+        <div>
+          <h2 id="topbar-title" class="text-lg sm:text-xl font-bold text-slate-900">Tabela de Preços &amp; Regras da IA</h2>
+          <p id="topbar-subtitle" class="text-xs text-slate-500">Defina os preços, horário e instruções — o Site do Cliente e a Assistente IA atualizam na hora</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Sincronizado c/ Site Cliente &amp; IA</span>
+          </div>
+
+          <button id="btn-quick-test-call" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-sm transition">
+            <i data-lucide="phone-incoming" class="w-3.5 h-3.5"></i>
+            Testar Chamada IA
+          </button>
+
+          <a href="index.html" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
+            <i data-lucide="globe" class="w-3.5 h-3.5 text-amber-400"></i>
+            Ver Site Cliente
+          </a>
+        </div>
+      </div>
+
+      <!-- TAB CONTAINERS -->
+      <main class="flex-1 p-4 sm:p-6 space-y-6">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1 (DEFAULT): PREÇOS & REGRAS DA IA                    -->
+        <!-- ========================================================= -->
+        <section id="tab-prices" class="tab-panel space-y-5">
+
+          <!-- Owner AI Rules & Workshop Hours Card -->
+          <div class="bg-slate-950 text-white rounded-2xl p-5 shadow-md border border-slate-800 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-400">
+                  <i data-lucide="bot" class="w-3.5 h-3.5"></i> O que a Assistente IA diz aos clientes
+                </div>
+                <h3 class="text-base font-extrabold mt-0.5">Horário, Saudação &amp; Instruções da Gerência para a IA</h3>
+                <p class="text-xs text-slate-400">Escreva aqui promoções, condições ou avisos (ex.: "Diagnóstico grátis na reparação de 4 injetores") e a IA informa os clientes ao telefone e no site.</p>
+              </div>
+              <button id="btn-save-ai-rules" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition shrink-0">
+                <i data-lucide="save" class="w-4 h-4"></i> Guardar Regras da IA
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Horário de Funcionamento</label>
+                <input id="owner-hours-input" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-amber-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Saudação Inicial ao Telefone</label>
+                <input id="owner-ai-greeting" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-amber-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-amber-300 mb-1">Instruções / Promoções para a IA &amp; Site</label>
+                <input id="owner-ai-notes" type="text" placeholder="Ex: Promoção: diagnóstico grátis na reparação de 4 injetores." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-amber-500/50 text-xs text-white focus:border-amber-400 focus:outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Owner Price Controls Bar -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-extrabold text-slate-900">Tabela de Preços &amp; Serviços de Arranjo</h3>
+                <p class="text-xs text-slate-500">Altere os valores abaixo: o Site do Cliente e a Assistente Telefónica passam a usar os novos preços imediatamente.</p>
+              </div>
+
+              <button id="btn-new-service" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Adicionar Novo Arranjo / Serviço
+              </button>
+            </div>
+
+            <!-- Filters & Bulk Price Tools -->
+            <div class="pt-3 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <input id="price-search" type="text" placeholder="Pesquisar serviço ou código..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-56 focus:border-amber-500 focus:outline-none" />
+                <div id="price-category-pills" class="flex flex-wrap gap-1.5">
+                  <button data-cat="Todas" class="cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white">Todas</button>
+                  <button data-cat="Bombas Injetoras" class="cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Bombas Injetoras</button>
+                  <button data-cat="Injetores" class="cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Injetores</button>
+                  <button data-cat="Auto-Diagnóstico" class="cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Auto-Diagnóstico</button>
+                  <button data-cat="Turbos e Hidráulica" class="cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Turbos e Hidráulica</button>
+                  <button data-cat="Serviços Rápidos Auto" class="cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Serviços Rápidos Auto</button>
+                </div>
+              </div>
+
+              <!-- Bulk Price & IVA Controls -->
+              <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                <span class="text-[11px] font-bold text-slate-600 px-1">Ajuste em Massa:</span>
+                <button data-bulk="-5" class="bulk-pct-btn px-2 py-1 rounded bg-white border border-slate-300 hover:bg-rose-50 text-xs font-bold text-rose-700">-5%</button>
+                <button data-bulk="5" class="bulk-pct-btn px-2 py-1 rounded bg-white border border-slate-300 hover:bg-emerald-50 text-xs font-bold text-emerald-700">+5%</button>
+                <div class="flex items-center gap-1">
+                  <input id="bulk-percent-input" type="number" step="1" placeholder="%" class="w-14 px-2 py-1 rounded border border-slate-300 text-xs text-center" />
+                  <button id="btn-apply-bulk" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">Aplicar</button>
+                </div>
+                <div class="h-4 w-px bg-slate-300 mx-1"></div>
+                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                  <span>IVA %:</span>
+                  <input id="iva-rate-input" type="number" min="0" max="30" step="1" value="16" class="w-14 px-2 py-1 rounded border border-slate-300 text-xs text-center font-bold text-amber-700" />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Services Real-Photo Cards Grid -->
+          <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: CENTRAL TELEFÓNICA IA (TESTAR & REGISTO CHAMADAS)  -->
+        <!-- ========================================================= -->
+        <section id="tab-assistant" class="tab-panel hidden space-y-6">
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                <i data-lucide="bot" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900">Simulador &amp; Registo de Chamadas — Centro Diesel</h3>
+                  <span id="ai-engine-badge" class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-100 text-emerald-700">Motor Local + Preços Vivos</span>
+                </div>
+                <p class="text-xs text-slate-500">Teste o que a IA responde aos clientes com os preços atuais ou consulte as chamadas feitas no Site do Cliente.</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                <input id="ai-tts-toggle" type="checkbox" checked class="rounded text-amber-600 focus:ring-amber-500" />
+                <span>Falar em Voz Alta (PT)</span>
+              </label>
+
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                <input id="ai-auto-answer" type="checkbox" checked class="rounded text-amber-600 focus:ring-amber-500" />
+                <span>Atendimento Automático</span>
+              </label>
+
+              <button id="btn-assistant-gemini-cfg" class="px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+                Configurar Gemini API
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Phone Console -->
+            <div class="lg:col-span-4 bg-slate-950 text-white rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4 border border-slate-800">
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] uppercase tracking-wider font-bold text-amber-400">Linha: 296 383 150</span>
+                  <span id="call-status-pill" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300">Em Espera</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Nº Chamador</label>
+                    <input id="call-phone-input" type="text" value="914 582 310" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:border-amber-500 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Nome (Opcional)</label>
+                    <input id="call-name-input" type="text" placeholder="Ex: Sr. João" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:border-amber-500 focus:outline-none" />
+                  </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 text-center space-y-2.5">
+                  <div class="w-14 h-14 mx-auto rounded-full bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400" id="call-avatar-ring">
+                    <i data-lucide="phone" class="w-6 h-6"></i>
+                  </div>
+                  <div id="call-display-name" class="font-bold text-sm text-white">Pronto para Testar Chamada</div>
+                  <div id="call-timer" class="font-mono text-lg font-bold text-amber-400">00:00</div>
+                  <div id="voice-wave" class="voice-wave justify-center">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                  <div id="ai-price-sync-count" class="text-[11px] text-emerald-400 font-medium">13 serviços sincronizados</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <button id="btn-start-call" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                    <i data-lucide="phone-incoming" class="w-4 h-4"></i> Atender / Iniciar
+                  </button>
+                  <button id="btn-end-call" disabled class="px-3 py-2.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 disabled:opacity-40 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                    <i data-lucide="phone-off" class="w-4 h-4"></i> Desligar &amp; Gravar
+                  </button>
+                </div>
+
+                <button id="btn-mic" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs font-semibold flex items-center justify-center gap-2 transition">
+                  <i data-lucide="mic" class="w-4 h-4 text-amber-400"></i>
+                  <span id="mic-btn-label">Falar pelo Microfone</span>
+                </button>
+              </div>
+
+              <div class="pt-3 border-t border-slate-800">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Simular Pergunta de Cliente:</div>
+                <div class="space-y-1.5">
+                  <button data-scenario="Quanto custa reparar 4 injetores Common Rail?" class="scenario-btn w-full text-left px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+                    "Quanto custa reparar 4 injetores Common Rail?"
+                  </button>
+                  <button data-scenario="Quero marcar diagnóstico para amanhã" class="scenario-btn w-full text-left px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+                    "Quero marcar diagnóstico para amanhã"
+                  </button>
+                  <button data-scenario="A minha carrinha deita fumo preto e perde força" class="scenario-btn w-full text-left px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+                    "A minha carrinha deita fumo preto e perde força"
+                  </button>
+                  <button data-scenario="Qual é a morada e horário da oficina?" class="scenario-btn w-full text-left px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+                    "Qual é a morada e horário da oficina?"
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Transcript -->
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px]">
+              <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-2xl">
+                <div>
+                  <h4 class="font-bold text-sm text-slate-900">Conversa em Tempo Real</h4>
+                  <p class="text-[11px] text-slate-500">Usa os preços e instruções atuais do Dono</p>
+                </div>
+                <button id="btn-clear-call-chat" class="text-xs text-slate-500 hover:text-slate-800 font-medium">Limpar</button>
+              </div>
+              <div id="call-transcript" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/40"></div>
+              <form id="call-message-form" class="p-3 border-t border-slate-200 bg-white rounded-b-2xl flex items-center gap-2">
+                <input id="call-message-input" type="text" placeholder="Escreva como cliente ao telefone..." class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+                <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm flex items-center gap-1.5 transition">
+                  <i data-lucide="send" class="w-4 h-4"></i> Enviar
+                </button>
+              </form>
+            </div>
+
+            <!-- Triage Panel -->
+            <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between space-y-4">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <h4 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                    <i data-lucide="clipboard-check" class="w-4 h-4 text-amber-600"></i>
+                    Triagem Automática
+                  </h4>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold">Em Direto</span>
+                </div>
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase">Intenção Detetada</label>
+                  <div id="triage-intent" class="mt-1 px-2.5 py-1.5 rounded-lg bg-slate-100 text-xs font-semibold text-slate-800">Aguardar chamada...</div>
+                </div>
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase">Matrícula / Viatura</label>
+                  <input id="triage-vehicle" type="text" placeholder="Ex: 44-XZ-19 / Mercedes Sprinter" class="mt-1 w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:border-amber-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase">Serviços Cotados</label>
+                  <div id="triage-services" class="mt-1 space-y-1.5 text-xs text-slate-600">
+                    <div class="italic text-slate-400">Nenhum serviço detetado ainda</div>
+                  </div>
+                </div>
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <div class="text-[11px] font-semibold text-amber-800 uppercase">Estimativa c/ IVA</div>
+                  <div id="triage-total" class="text-xl font-extrabold text-slate-900 mt-0.5">0,00 €</div>
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-3 border-t border-slate-100">
+                <button id="btn-triage-booking" class="w-full px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i> Converter em Marcação
+                </button>
+                <button id="btn-triage-workorder" class="w-full px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-amber-400"></i> Criar Folha de Obra
+                </button>
+                <button id="btn-triage-quote" class="w-full px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="calculator" class="w-3.5 h-3.5"></i> Abrir no Orçamentador
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call History Table -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 class="font-bold text-slate-900">Registo de Chamadas (Central &amp; Site do Cliente)</h3>
+                <p class="text-xs text-slate-500">Todas as conversas atendidas pela Assistente IA</p>
+              </div>
+              <input id="call-history-search" type="text" placeholder="Pesquisar telefone, cliente ou assunto..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full sm:w-64 focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div id="call-history-list" class="divide-y divide-slate-100"></div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: PAINEL DE ESCRITÓRIO (DASHBOARD)                   -->
+        <!-- ========================================================= -->
+        <section id="tab-dashboard" class="tab-panel hidden space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Chamadas IA</span>
+                <span class="p-2 rounded-lg bg-amber-50 text-amber-600"><i data-lucide="phone-call" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-calls" class="text-2xl font-extrabold text-slate-900 mt-2">0</div>
+              <div class="text-xs text-emerald-600 font-medium mt-1">Atendimento 24h ativo</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Marcações</span>
+                <span class="p-2 rounded-lg bg-blue-50 text-blue-600"><i data-lucide="calendar-check" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-bookings" class="text-2xl font-extrabold text-slate-900 mt-2">0</div>
+              <div class="text-xs text-slate-500 mt-1">Agenda + Site Cliente</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Folhas de Obra</span>
+                <span class="p-2 rounded-lg bg-indigo-50 text-indigo-600"><i data-lucide="wrench" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-workorders" class="text-2xl font-extrabold text-slate-900 mt-2">0</div>
+              <div class="text-xs text-slate-500 mt-1">Viaturas em curso</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Faturação Estimada</span>
+                <span class="p-2 rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="trending-up" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-revenue" class="text-2xl font-extrabold text-slate-900 mt-2">0 €</div>
+              <div class="text-xs text-slate-500 mt-1">Folhas ativas c/ IVA</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Alertas Stock</span>
+                <span class="p-2 rounded-lg bg-rose-50 text-rose-600"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-alerts" class="text-2xl font-extrabold text-slate-900 mt-2">0</div>
+              <div class="text-xs text-rose-600 font-medium mt-1">Peças c/ stock reduzido</div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Ações Rápidas da Secretaria</div>
+              <h3 class="text-lg font-bold mt-0.5">Gestão Diária da Oficina</h3>
+              <p class="text-xs text-slate-300 mt-1">Receba pedidos do site, abra folhas de obra ou imprima a folha diária em A4.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button data-action="dash-call" class="px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition">
+                <i data-lucide="phone" class="w-3.5 h-3.5"></i> Testar Chamada IA
+              </button>
+              <button data-action="dash-new-wo" class="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Nova Folha de Obra
+              </button>
+              <button data-action="dash-prices" class="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Editar Preços
+              </button>
+              <button data-action="dash-print-day" class="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir Folha do Dia
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                <i data-lucide="cpu" class="w-4 h-4 text-amber-600"></i>
+                Estado das Bancadas &amp; Elevadores
+              </h3>
+              <div id="dashboard-bays" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
+
+            <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="headphones" class="w-4 h-4 text-amber-600"></i>
+                  Últimas Chamadas
+                </h3>
+                <button data-tab-jump="assistant" class="text-xs font-semibold text-amber-600 hover:text-amber-700">Ver todas &rarr;</button>
+              </div>
+              <div id="dashboard-recent-calls" class="space-y-2.5 flex-1"></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                Ajuste Rápido de Preços
+              </h3>
+              <button data-tab-jump="prices" class="text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-lg bg-slate-100">Abrir Tabela Completa</button>
+            </div>
+            <div id="dashboard-quick-prices" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 4: SECRETARIA, FOLHAS DE OBRA & ORÇAMENTOS            -->
+        <!-- ========================================================= -->
+        <section id="tab-office" class="tab-panel hidden space-y-5">
+          <div class="bg-white rounded-xl border border-slate-200 p-2 shadow-sm flex flex-wrap items-center justify-between gap-2">
+            <div id="office-subtabs" class="flex flex-wrap gap-1.5">
+              <button data-subtab="workorders" class="subtab-btn active px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                <i data-lucide="wrench" class="w-3.5 h-3.5"></i> Folhas de Obra / Viaturas
+              </button>
+              <button data-subtab="bookings" class="subtab-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Agenda de Marcações
+              </button>
+              <button data-subtab="quotes" class="subtab-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Orçamentos &amp; Faturas Pro-Forma
+              </button>
+            </div>
+          </div>
+
+          <div id="panel-workorders" class="office-subpanel space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <input id="wo-search" type="text" placeholder="Pesquisar matrícula, cliente ou telefone..." class="px-3 py-2 rounded-lg border border-slate-300 text-xs w-64 focus:border-amber-500 focus:outline-none" />
+                <select id="wo-status-filter" class="px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-amber-500 focus:outline-none">
+                  <option value="Todos">Todos os Estados</option>
+                  <option value="Aguardar Orçamento">Aguardar Orçamento</option>
+                  <option value="Em Bancada de Teste">Em Bancada de Teste</option>
+                  <option value="Aguardar Peças">Aguardar Peças</option>
+                  <option value="Pronto para Entrega">Pronto para Entrega</option>
+                  <option value="Entregue">Entregue</option>
+                </select>
+              </div>
+              <button id="btn-new-workorder" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4 text-amber-400"></i> Nova Folha de Obra
+              </button>
+            </div>
+            <div id="workorders-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+          </div>
+
+          <div id="panel-bookings" class="office-subpanel hidden space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm">Agenda da Oficina — Ponta Delgada</h4>
+                <p class="text-xs text-slate-500">Inclui pedidos enviados pelo Site do Cliente, pela Assistente IA e pela Secretaria</p>
+              </div>
+              <button id="btn-new-booking" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5">
+                <i data-lucide="calendar-plus" class="w-4 h-4"></i> Nova Marcação
+              </button>
+            </div>
+            <div id="bookings-list" class="space-y-3"></div>
+          </div>
+
+          <div id="panel-quotes" class="office-subpanel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              <div class="lg:col-span-7 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                  <h4 class="font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                    <i data-lucide="user-check" class="w-4 h-4 text-amber-600"></i>
+                    1. Dados do Cliente e Viatura
+                  </h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">Nome / Empresa *</label>
+                      <input id="q-client-name" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">Telefone</label>
+                      <input id="q-client-phone" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">NIF (Opcional)</label>
+                      <input id="q-client-nif" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+                      <input id="q-client-email" type="email" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">Matrícula *</label>
+                      <input id="q-vehicle-plate" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs uppercase font-bold" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">Marca / Modelo / Kms</label>
+                      <input id="q-vehicle-model" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observações / Diagnóstico</label>
+                    <textarea id="q-notes" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs"></textarea>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                  <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <h4 class="font-bold text-slate-900 flex items-center gap-2">
+                      <i data-lucide="list-plus" class="w-4 h-4 text-amber-600"></i>
+                      2. Selecionar Serviços da Tabela de Preços
+                    </h4>
+                  </div>
+                  <div id="quote-service-picker" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                  <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <h4 class="font-bold text-slate-900 flex items-center gap-2">
+                      <i data-lucide="package" class="w-4 h-4 text-amber-600"></i>
+                      3. Peças Extras (Opcional)
+                    </h4>
+                    <button id="btn-add-extra-part" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">+ Adicionar Peça</button>
+                  </div>
+                  <div id="quote-extra-parts" class="space-y-2"></div>
+                </div>
+              </div>
+
+              <div class="lg:col-span-5">
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sticky top-20 space-y-4">
+                  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div>
+                      <div class="text-[11px] font-bold uppercase text-amber-600">Documento Pro-Forma</div>
+                      <h4 class="font-extrabold text-slate-900">Resumo do Orçamento</h4>
+                    </div>
+                    <span id="quote-number-badge" class="px-2.5 py-1 rounded-lg bg-slate-100 font-mono text-xs font-bold text-slate-700">ORC-2026-001</span>
+                  </div>
+
+                  <div id="quote-selected-lines" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div>
+
+                  <div class="border-t border-slate-200 pt-3 space-y-1.5 text-sm">
+                    <div class="flex justify-between text-slate-600">
+                      <span>Subtotal (s/ IVA):</span>
+                      <span id="quote-subtotal" class="font-semibold">0,00 €</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-600">
+                      <span class="flex items-center gap-1.5">
+                        IVA (Açores):
+                        <input id="quote-iva-override" type="number" min="0" max="30" value="16" class="w-12 px-1.5 py-0.5 rounded border border-slate-300 text-xs text-center font-bold" />%
+                      </span>
+                      <span id="quote-iva-amount" class="font-semibold">0,00 €</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                      <span>TOTAL ESTIMADO:</span>
+                      <span id="quote-total" class="text-amber-600">0,00 €</span>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2 pt-2">
+                    <button id="btn-print-quote" class="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                      <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / Exportar PDF Oficial
+                    </button>
+                    <button id="btn-save-quote-wo" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition">
+                      <i data-lucide="save" class="w-4 h-4 text-amber-400"></i> Guardar como Folha de Obra
+                    </button>
+                    <button id="btn-clear-quote" class="w-full py-2 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                      Limpar Rascunho
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="modal-service" class="modal-backdrop hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-service-title" class="font-extrabold text-lg text-slate-900">Editar Serviço / Arranjo</h3>
+        <button data-close-modal="modal-service" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="form-service" class="space-y-3">
+        <input type="hidden" id="srv-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Código *</label>
+            <input id="srv-code" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs uppercase font-bold" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Categoria *</label>
+            <select id="srv-category" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+              <option value="Bombas Injetoras">Bombas Injetoras</option>
+              <option value="Injetores">Injetores</option>
+              <option value="Auto-Diagnóstico">Auto-Diagnóstico</option>
+              <option value="Turbos e Hidráulica">Turbos e Hidráulica</option>
+              <option value="Serviços Rápidos Auto">Serviços Rápidos Auto</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Nome do Arranjo / Serviço *</label>
+          <input id="srv-name" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Descrição Técnica</label>
+          <textarea id="srv-desc" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs"></textarea>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Preço Base s/ IVA (€) *</label>
+            <input id="srv-price" type="number" step="0.5" min="0" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-bold text-amber-700" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Duração</label>
+            <input id="srv-duration" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Garantia</label>
+            <input id="srv-warranty" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Stock</label>
+            <select id="srv-stock" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+              <option value="Disponível">Disponível</option>
+              <option value="Stock Reduzido">Stock Reduzido</option>
+              <option value="Peça por Encomenda">Peça por Encomenda</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">URL da Imagem</label>
+            <input id="srv-image" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Ou Carregar Foto</label>
+            <input id="srv-image-file" type="file" accept="image/*" class="w-full text-xs text-slate-600" />
+          </div>
+        </div>
+        <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-700 pt-1">
+          <input id="srv-visible" type="checkbox" checked class="rounded text-amber-600" />
+          Mostrar serviço e preço no Site do Cliente
+        </label>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" data-close-modal="modal-service" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold">Guardar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-workorder" class="modal-backdrop hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">Folha de Obra / Receção de Viatura</h3>
+        <button data-close-modal="modal-workorder" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="form-workorder" class="space-y-3">
+        <input type="hidden" id="wo-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nome do Cliente *</label>
+            <input id="wo-client" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Telefone *</label>
+            <input id="wo-phone" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Matrícula *</label>
+            <input id="wo-plate" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs uppercase font-bold" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Marca / Modelo *</label>
+            <input id="wo-vehicle" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Estado</label>
+            <select id="wo-status" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+              <option value="Aguardar Orçamento">Aguardar Orçamento</option>
+              <option value="Em Bancada de Teste">Em Bancada de Teste</option>
+              <option value="Aguardar Peças">Aguardar Peças</option>
+              <option value="Pronto para Entrega">Pronto para Entrega</option>
+              <option value="Entregue">Entregue</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Posto / Bancada</label>
+            <select id="wo-bay" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+              <option value="Por Atribuir">Por Atribuir</option>
+              <option value="Bancada Bosch #1">Bancada Bosch #1</option>
+              <option value="Bancada Common Rail #2">Bancada Common Rail #2</option>
+              <option value="Elevador Rápido #1">Elevador Rápido #1</option>
+              <option value="Diagnóstico Eletrónico">Diagnóstico Eletrónico</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Descrição do Serviço / Sintomas *</label>
+          <textarea id="wo-desc" rows="2" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Valor Estimado c/ IVA (€)</label>
+          <input id="wo-total" type="number" step="0.01" min="0" value="0" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-bold" />
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" data-close-modal="modal-workorder" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Guardar Folha</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-booking" class="modal-backdrop hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">Nova Marcação na Agenda</h3>
+        <button data-close-modal="modal-booking" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="form-booking" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente *</label>
+          <input id="bk-client" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Telefone *</label>
+            <input id="bk-phone" type="text" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Viatura / Matrícula</label>
+            <input id="bk-vehicle" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Data *</label>
+            <input id="bk-date" type="date" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Hora *</label>
+            <input id="bk-time" type="time" value="09:00" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Serviço / Notas</label>
+          <input id="bk-service" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" data-close-modal="modal-booking" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold">Agendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-settings" class="modal-backdrop hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">Definições, PIN, Gemini API &amp; Dados</h3>
+        <button data-close-modal="modal-settings" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="font-bold text-slate-900">Segurança da Área do Dono</div>
+          <div class="grid grid-cols-2 gap-3 items-center">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">PIN de Acesso (Dono)</label>
+              <input id="cfg-owner-pin" type="text" maxlength="10" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold" />
+            </div>
+            <label class="inline-flex items-center gap-2 pt-5 font-semibold text-slate-700 cursor-pointer">
+              <input id="cfg-require-pin" type="checkbox" class="rounded text-amber-600" />
+              Pedir PIN ao abrir dono.html
+            </label>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="font-bold text-slate-900">Integração Opcional Google Gemini API</div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Gemini API Key</label>
+            <input id="cfg-gemini-key" type="password" placeholder="AIzaSy..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+          </div>
+          <div class="grid grid-cols-2 gap-3 items-center">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Modelo Gemini</label>
+              <select id="cfg-gemini-model" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+              </select>
+            </div>
+            <label class="inline-flex items-center gap-2 pt-5 font-semibold text-slate-700 cursor-pointer">
+              <input id="cfg-use-gemini" type="checkbox" class="rounded text-amber-600" />
+              Ativar Modo Gemini API
+            </label>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+          <div class="font-bold text-slate-900">Gestão de Dados &amp; Backups</div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-clear-sample-data" class="px-3 py-2 rounded-lg bg-amber-100 border border-amber-300 hover:bg-amber-200 text-amber-900 font-bold">
+              Limpar Clientes/Chamadas Fictícias
+            </button>
+            <button id="btn-export-json" class="px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold">
+              Exportar JSON
+            </button>
+            <label class="px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-semibold cursor-pointer">
+              Importar JSON
+              <input id="input-import-json" type="file" accept=".json" class="hidden" />
+            </label>
+            <button id="btn-reset-data" class="px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-semibold">
+              Repor Originais
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <button type="button" data-close-modal="modal-settings" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold">Fechar</button>
+        <button id="btn-save-settings" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold">Guardar Definições</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-transcript" class="modal-backdrop hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-transcript-title" class="font-extrabold text-base text-slate-900">Registo da Chamada</h3>
+        <button data-close-modal="modal-transcript" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="modal-transcript-body" class="max-h-96 overflow-y-auto space-y-2.5 text-xs"></div>
+      <div class="flex justify-end pt-2 border-t border-slate-100">
+        <button data-close-modal="modal-transcript" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm"></div>
+  <div id="print-sheet"></div>
+
+  <script src="store.js"></script>
+  <script src="ai-engine.js"></script>
+  <script src="dono.js"></script>
+</body>
+</html>

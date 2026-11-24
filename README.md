@@ -1,44 +1,36 @@
-# Centro Diesel — Gestão de Escritório, Tabela de Preços & Assistente Telefónico Virtual
+# Centro Diesel — Site Público do Cliente & Painel Privado do Dono
 
-Aplicação web desenvolvida para a oficina **Centro Diesel (Manuel Francisco Raposo & Ca. Lda.)**, localizada na Zona Comercial dos Valados, Ponta Delgada (Ilha de São Miguel, Açores).
+Aplicação web dividida em **duas versões sincronizadas em tempo real** para a oficina **Centro Diesel (Manuel Francisco Raposo & Ca. Lda.)**, Zona Comercial dos Valados, Ponta Delgada (Ilha de São Miguel, Açores).
 
-## Funcionalidades Principais
+## As Duas Versões
 
-1. **Painel de Escritório (Dashboard)**
-   - Indicadores ao vivo: chamadas atendidas pelo Assistente IA, marcações, folhas de obra em curso, faturação estimada (com IVA dos Açores a 16% configurável) e alertas de stock.
-   - Controlo de ocupação das bancadas (*Bancada Bosch #1*, *Bancada Common Rail #2*, *Elevador Rápido #1*, *Diagnóstico Eletrónico*).
-   - Impressão da **Folha Diária** em formato A4.
+### 1. Versão do Cliente (`index.html`)
+Site público limpo pensado para os clientes da oficina:
+- **Preçário ao Vivo:** mostra os preços reais definidos pelo dono (com opção para ver **c/ IVA 16% Açores** ou **s/ IVA**), fotografias reais dos serviços e avisos/promoções da gerência.
+- **Assistente Telefónico Virtual (`296 383 150`):** janela interativa onde o cliente pode falar por voz ou texto com a assistente IA, que responde com os preços e regras exatas configuradas pelo dono, e permite confirmar logo uma pré-marcação.
+- **Marcação Online:** substitui o antigo formulário (`mfrcentrodiesel.com/?page_id=76`) e envia os pedidos diretamente para a agenda da secretaria.
 
-2. **Assistente Telefónico Virtual (`296 383 150`)**
-   - Simulador de chamadas em tempo real com voz em Português (`Web Speech API`), microfone e cenários rápidos de teste.
-   - **Sincronização imediata com a Tabela de Preços do Dono**: qualquer alteração de preço feita pelo proprietário é refletida na hora nas respostas do assistente telefónico.
-   - Triagem automática de chamadas com conversão em 1 clique para **Marcação na Agenda**, **Folha de Obra** ou **Orçamento**.
-   - Suporte opcional à **Google Gemini API** (chave configurável diretamente nas Definições da app) mantendo funcionamento 100% operacional offline através do motor local.
+### 2. Versão do Dono & Escritório (`dono.html`)
+Área privada protegida por **PIN** (**PIN padrão: `1234`**, configurável ou desativável nas Definições):
+- **Preços & Regras da IA:** o dono altera preços (`-5€` / `+5€`, edição direta, ajuste em massa `%`, IVA %) e define o **horário**, a **saudação telefónica** e **instruções/promoções** que a IA diz aos clientes.
+- **Central Telefónica IA:** simulador para testar chamadas após alterar preços e histórico completo de chamadas (incluindo chamadas feitas no Site do Cliente).
+- **Painel de Escritório & Secretaria:** folhas de obra por matrícula, agenda unificada de marcações, controlo de bancadas e emissão/impressão de orçamentos A4.
 
-3. **Tabela de Preços & Catálogo (Modo Dono)**
-   - 13 serviços pré-configurados nas áreas de *Bombas Injetoras*, *Injetores Common Rail*, *Auto-Diagnóstico*, *Turbos e Hidráulica* e *Serviços Rápidos Auto*.
-   - Edição instantânea de preços (`-5€` / `+5€`, input direto, ajuste percentual em massa, cálculo automático com IVA, upload de imagem própria e adição de novos arranjos).
+## Sincronização Entre os Dois Sites
+Ambas as versões partilham `store.js` e `ai-engine.js`:
+- **No servidor local (`server.ps1`):** os dados guardam em `data.json` via `/api/state` e sincronizam automaticamente entre separadores ou navegadores.
+- **Sem servidor (localStorage):** sincronizam instantaneamente no mesmo navegador entre separadores abertos.
 
-4. **Secretaria, Folhas de Obra & Orçamentos A4**
-   - Gestão de viaturas por matrícula e estado.
-   - Agenda de marcações unificada (Secretaria, Assistente IA e Portal do Cliente).
-   - Orçamentador Pro-Forma com exportação/impressão oficial em A4.
-
-5. **Portal Público do Cliente**
-   - Versão modernizada do portal antigo (`mfrcentrodiesel.com/?page_id=76`) com preçário sincronizado, morada/contactos de Ponta Delgada e formulário de marcação online ligado à secretaria.
-
-## Como Executar Localmente
-
-Pode abrir diretamente o ficheiro `index.html` no navegador ou iniciar o servidor local incluído (PowerShell):
+## Como Executar
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\server.ps1
 ```
 
-Depois abra no navegador: `http://localhost:8080`
+- **Site do Cliente:** `http://localhost:8080/`
+- **Área do Dono:** `http://localhost:8080/dono.html` (PIN padrão: `1234`)
 
 ## Contactos Oficiais da Oficina
-
 - **Empresa:** Manuel Francisco Raposo & Ca. Lda. (Centro Diesel)
 - **Morada:** Zona Comercial dos Valados, Rua António de Medeiros Almeida – Lotes 23/24, 9500-652 Ponta Delgada, São Miguel, Açores
 - **Telefone:** 296 383 150
