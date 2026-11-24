@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Centro Diesel — Oficina Especializada &amp; Preçário Oficial | Ponta Delgada</title>
+  <title>Centro Diesel — Oficina Especializada &amp; Área do Cliente | Ponta Delgada</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,10 +13,10 @@
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
 
-  <!-- TOP PUBLIC NAVIGATION -->
+  <!-- TOP PUBLIC NAVIGATION (Zero owner/admin links) -->
   <header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-      <a href="#" class="flex items-center gap-3">
+      <button id="btn-logo-home" class="flex items-center gap-3 text-left">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-base shadow">
           CD
         </div>
@@ -24,30 +24,32 @@
           <div class="font-extrabold text-sm sm:text-base tracking-tight leading-tight">CENTRO DIESEL</div>
           <div class="text-[11px] text-amber-400 leading-tight">Manuel Francisco Raposo &amp; Ca. Lda. • Ponta Delgada</div>
         </div>
-      </a>
+      </button>
 
-      <nav class="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-300">
-        <a href="#servicos" class="hover:text-amber-400 transition">Serviços &amp; Preços</a>
-        <a href="#galeria" class="hover:text-amber-400 transition">Oficina</a>
-        <a href="#marcacao" class="hover:text-amber-400 transition">Marcação Online</a>
-        <a href="#contactos" class="hover:text-amber-400 transition">Contactos</a>
+      <nav class="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-300">
+        <button id="btn-nav-client-home" class="hover:text-amber-400 text-amber-400 transition">Oficina &amp; Preços</button>
+        <a href="#servicos" class="client-anchor hover:text-amber-400 transition">Tabela de Preços</a>
+        <a href="#marcacao" class="client-anchor hover:text-amber-400 transition">Marcação Online</a>
+        <a href="#contactos" class="client-anchor hover:text-amber-400 transition">Contactos</a>
       </nav>
 
       <div class="flex items-center gap-2.5">
+        <button id="btn-nav-client-account" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span id="nav-client-account-label">A Minha Conta</span>
+        </button>
+
         <button id="btn-open-client-ai" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition">
           <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
-          <span>Assistente IA (296 383 150)</span>
+          <span class="hidden sm:inline">Assistente IA (296 383 150)</span>
+          <span class="sm:hidden">IA</span>
         </button>
-        <a href="dono.html" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 transition" title="Acesso do Proprietário e Escritório">
-          <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span class="hidden sm:inline">Área do Dono</span>
-        </a>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
+  <!-- VIEW 1: PUBLIC WORKSHOP & LIVE PRICES -->
+  <main id="view-client-home" class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
 
     <!-- HERO BANNER -->
     <section class="relative rounded-3xl overflow-hidden bg-slate-950 text-white shadow-xl">
@@ -85,7 +87,7 @@
       </div>
     </section>
 
-    <!-- OWNER LIVE ANNOUNCEMENT / PROMOTION BANNER (Shown when owner adds aiNotes) -->
+    <!-- OWNER LIVE ANNOUNCEMENT -->
     <section id="client-owner-notice" class="hidden bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
       <div class="p-2 rounded-xl bg-amber-500 text-slate-950 shrink-0">
         <i data-lucide="megaphone" class="w-4 h-4"></i>
@@ -137,7 +139,6 @@
         </label>
       </div>
 
-      <!-- Search & Category Filters -->
       <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <input id="client-price-search" type="text" placeholder="Pesquisar serviço (ex: injetores, bomba, DPF, revisão)..." class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs w-full lg:w-72 focus:border-amber-500 focus:outline-none" />
         <div id="client-cat-pills" class="flex flex-wrap gap-1.5">
@@ -150,17 +151,19 @@
         </div>
       </div>
 
-      <!-- Cards Grid -->
       <div id="client-services-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- BOOKING FORM & CONTACTS (Modernized page_id=76) -->
+    <!-- BOOKING FORM & CONTACTS -->
     <section id="marcacao" class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
       <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Entre em Contacto Connosco</span>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">Pedido de Marcação ou Orçamento</h2>
-          <p class="text-xs text-slate-500">O seu pedido é enviado diretamente para a agenda da secretaria em Ponta Delgada.</p>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Entre em Contacto Connosco</span>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">Pedido de Marcação ou Orçamento</h2>
+            <p class="text-xs text-slate-500">Se iniciar sessão na sua conta, a sua marcação fica guardada no seu histórico privado.</p>
+          </div>
+          <span id="booking-auth-pill" class="hidden px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold"></span>
         </div>
 
         <form id="client-booking-form" class="space-y-3">
@@ -223,7 +226,6 @@
                 <div id="c-info-region" class="text-xs text-slate-400">Ilha de São Miguel, Açores</div>
               </div>
             </div>
-
             <div class="flex items-start gap-3">
               <i data-lucide="phone" class="w-4 h-4 text-amber-400 shrink-0 mt-1"></i>
               <div>
@@ -231,7 +233,6 @@
                 <div id="c-info-phone" class="text-amber-300 font-bold text-base">296 383 150</div>
               </div>
             </div>
-
             <div class="flex items-start gap-3">
               <i data-lucide="mail" class="w-4 h-4 text-amber-400 shrink-0 mt-1"></i>
               <div>
@@ -239,7 +240,6 @@
                 <div id="c-info-email">mfrcentrodiesel@gmail.com</div>
               </div>
             </div>
-
             <div class="flex items-start gap-3">
               <i data-lucide="clock" class="w-4 h-4 text-amber-400 shrink-0 mt-1"></i>
               <div>
@@ -265,13 +265,167 @@
 
   </main>
 
-  <!-- FOOTER -->
+  <!-- VIEW 2: CLIENT ACCOUNT TAB ("A MINHA CONTA") -->
+  <section id="view-client-account" class="hidden max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Área Pessoal Privada</span>
+        <h2 class="text-2xl font-extrabold text-slate-900">A Minha Conta Centro Diesel</h2>
+      </div>
+      <button id="btn-back-to-shop" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700">
+        &larr; Voltar aos Preços
+      </button>
+    </div>
+
+    <!-- LOGGED OUT: LOGIN / REGISTER CARD -->
+    <div id="client-auth-card" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden max-w-xl mx-auto">
+      <div class="grid grid-cols-2 border-b border-slate-200 bg-slate-50">
+        <button id="tab-btn-login" class="py-3.5 text-xs font-extrabold text-slate-900 bg-white border-b-2 border-amber-500">Iniciar Sessão</button>
+        <button id="tab-btn-register" class="py-3.5 text-xs font-bold text-slate-500 hover:text-slate-800">Criar Nova Conta</button>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+          <span>Privacidade garantida: a sua palavra-passe é encriptada e nenhum outro cliente consegue ver o seu e-mail, dados pessoais ou marcações.</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-client-login" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nome de Utilizador ou E-mail *</label>
+            <input id="login-identifier" type="text" required placeholder="Ex: joao.silva ou joao@email.pt" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Palavra-passe *</label>
+            <input id="login-password" type="password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+          </div>
+          <div id="login-error" class="hidden text-xs font-semibold text-rose-600"></div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
+            Entrar na Minha Conta
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="form-client-register" class="hidden space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Nome de Utilizador (@) *</label>
+              <input id="reg-username" type="text" required placeholder="ex: joaosilva" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm lowercase focus:border-amber-500 focus:outline-none" />
+              <span class="text-[10px] text-slate-400">3 a 24 letras/números (sem espaços)</span>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Nome Completo *</label>
+              <input id="reg-fullname" type="text" required placeholder="João Silva" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">E-mail Privado *</label>
+              <input id="reg-email" type="email" required placeholder="joao@exemplo.pt" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Telefone</label>
+              <input id="reg-phone" type="tel" placeholder="912 345 678" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Viatura / Matrícula Habitual</label>
+            <input id="reg-vehicle" type="text" placeholder="Ex: 22-AB-45 • VW Golf TDI" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Palavra-passe (mín. 6 caracteres) *</label>
+            <input id="reg-password" type="password" minlength="6" required placeholder="Escolha uma palavra-passe segura" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
+          </div>
+          <div id="reg-error" class="hidden text-xs font-semibold text-rose-600"></div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm transition">
+            Criar Conta Pessoal
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- LOGGED IN: CLIENT PRIVATE DASHBOARD -->
+    <div id="client-account-dashboard" class="hidden space-y-6">
+      <!-- Profile Header -->
+      <div class="bg-slate-950 text-white rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg" id="acct-avatar">U</div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base" id="acct-fullname">Cliente</span>
+              <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold" id="acct-username">@utilizador</span>
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5" id="acct-email">email@exemplo.pt</div>
+          </div>
+        </div>
+        <button id="btn-client-logout" class="px-4 py-2 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold flex items-center gap-1.5 transition">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Terminar Sessão
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Own Profile Editor -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+            <i data-lucide="user-cog" class="w-4 h-4 text-amber-600"></i>
+            Os Meus Dados Privados
+          </h3>
+          <form id="form-client-profile" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Nome Completo</label>
+              <input id="prof-fullname" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">E-mail (Privado)</label>
+              <input id="prof-email" type="email" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Telefone</label>
+                <input id="prof-phone" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Viatura Habitual</label>
+                <input id="prof-vehicle" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 space-y-2">
+              <div class="text-[11px] font-bold uppercase text-slate-500">Alterar Palavra-passe (Opcional)</div>
+              <input id="prof-cur-pass" type="password" placeholder="Palavra-passe atual" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              <input id="prof-new-pass" type="password" placeholder="Nova palavra-passe (mín. 6 car.)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            </div>
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              Guardar Perfil
+            </button>
+          </form>
+        </div>
+
+        <!-- Own Bookings & Calls ONLY -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+              <i data-lucide="calendar-check" class="w-4 h-4 text-amber-600"></i>
+              As Minhas Marcações
+            </h3>
+            <div id="acct-my-bookings" class="space-y-2.5 text-xs"></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+              <i data-lucide="phone-call" class="w-4 h-4 text-amber-600"></i>
+              As Minhas Consultas com a Assistente IA
+            </h3>
+            <div id="acct-my-calls" class="space-y-2.5 text-xs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER (Zero owner/admin links) -->
   <footer class="border-t border-slate-200 bg-white mt-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
       <div>&copy; Centro Diesel — Manuel Francisco Raposo &amp; Ca. Lda. • Ponta Delgada, Açores</div>
-      <a href="dono.html" class="font-semibold text-slate-700 hover:text-amber-600 inline-flex items-center gap-1">
-        <i data-lucide="lock" class="w-3.5 h-3.5"></i> Acesso Reservado (Área do Dono &amp; Escritório)
-      </a>
+      <div>Atendimento Telefónico: <strong>296 383 150</strong> • mfrcentrodiesel@gmail.com</div>
     </div>
   </footer>
 
@@ -285,7 +439,6 @@
   <!-- MODAL: CLIENT INTERACTIVE AI PHONE ASSISTANT -->
   <div id="modal-client-ai" class="modal-backdrop hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
     <div class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-      <!-- Modal Header -->
       <div class="bg-slate-950 text-white px-5 py-4 flex items-center justify-between border-b border-slate-800">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-400 flex items-center justify-center call-ring-active">
@@ -304,7 +457,6 @@
         </button>
       </div>
 
-      <!-- Caller Details + Voice Wave -->
       <div class="bg-slate-900 text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
         <div class="flex flex-wrap items-center gap-2">
           <input id="cai-name" type="text" placeholder="O seu nome" class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white w-36 focus:border-amber-500 focus:outline-none" />
@@ -326,7 +478,6 @@
         </div>
       </div>
 
-      <!-- Quick Questions -->
       <div class="px-5 py-2.5 bg-slate-100 border-b border-slate-200 flex flex-wrap gap-1.5">
         <button data-cai-q="Quanto custa reparar 4 injetores Common Rail?" class="cai-quick px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-amber-400 text-[11px] font-medium text-slate-700 transition">
           Reparar 4 injetores Common Rail?
@@ -342,10 +493,8 @@
         </button>
       </div>
 
-      <!-- Conversation & Live Estimate -->
       <div class="flex-1 overflow-y-auto p-5 space-y-3 bg-slate-50" id="cai-transcript"></div>
 
-      <!-- Live Triage Summary Bar (Appears when AI quotes services) -->
       <div id="cai-quote-box" class="hidden px-5 py-3 bg-amber-50 border-t border-amber-200 flex flex-wrap items-center justify-between gap-3">
         <div class="text-xs">
           <div class="font-bold text-amber-900">Estimativa Calculada pela Assistente:</div>
@@ -362,7 +511,6 @@
         </div>
       </div>
 
-      <!-- Input Bar -->
       <form id="cai-form" class="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2">
         <input id="cai-input" type="text" placeholder="Escreva a sua pergunta ou fale pelo microfone..." class="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-amber-500 focus:outline-none" />
         <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm flex items-center gap-1.5">
@@ -375,10 +523,10 @@
     </div>
   </div>
 
-  <!-- TOAST CONTAINER -->
   <div id="toast-container" class="fixed bottom-20 right-5 z-50 space-y-2 max-w-sm"></div>
 
   <script src="store.js"></script>
+  <script src="auth.js"></script>
   <script src="ai-engine.js"></script>
   <script src="cliente.js"></script>
 </body>

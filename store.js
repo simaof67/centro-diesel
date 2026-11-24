@@ -1,10 +1,11 @@
 /* =========================================================================
-   CENTRO DIESEL — Shared Store & Real-Time Sync (Versão Cliente <-> Versão Dono)
-   Sincroniza via localStorage (eventos cross-tab) e /api/state (server.ps1)
+   CENTRO DIESEL — Shared Store & Privacy-Safe Sync
+   Separa estritamente os dados públicos (preços/serviços) dos privados (dono).
    ========================================================================= */
 
 (function (global) {
-  const STORAGE_KEY = 'centro_diesel_shared_v2';
+  const PUBLIC_CACHE_KEY = 'centro_diesel_public_v3';
+  const OWNER_OFFLINE_KEY = 'centro_diesel_owner_offline_v3';
 
   const CATEGORY_FALLBACKS = {
     'Bombas Injetoras': 'assets/bomba-injetora.svg',
@@ -219,8 +220,6 @@
       },
       settings: {
         ivaRate: 16,
-        ownerPin: '1234',
-        requirePin: true,
         aiGreeting: 'Centro Diesel, Manuel Francisco Raposo & Companhia, bom dia! Está a falar com a assistente virtual da oficina em Ponta Delgada. Em que posso ajudar hoje?',
         aiNotes: '',
         geminiApiKey: '',
@@ -245,7 +244,7 @@
           vehicle: 'Mercedes-Benz Sprinter 316 CDI',
           status: 'Em Bancada de Teste',
           bay: 'Bancada Bosch #1',
-          desc: 'Registo de exemplo — pode limpar todos os dados fictícios nas Definições.',
+          desc: 'Registo de exemplo — pode limpar os dados fictícios nas Definições.',
           total: 672.80,
           createdAt: getTodayISO(0)
         }
@@ -253,6 +252,8 @@
       bookings: [
         {
           id: 'AG-01',
+          userId: '',
+          username: '',
           client: 'Carlos Arruda (Exemplo)',
           phone: '913 228 901',
           vehicle: '19-ML-83 • Renault Master',
@@ -266,6 +267,8 @@
       calls: [
         {
           id: 'CH-1001',
+          userId: '',
+          username: '',
           timestamp: `${getTodayISO(0)} 09:42`,
           phone: '913 228 901',
           callerName: 'Carlos Arruda (Exemplo)',
@@ -276,8 +279,8 @@
           status: 'Convertida em Marcação',
           messages: [
             { sender: 'ai', text: 'Centro Diesel, Manuel Francisco Raposo & Ca., bom dia! Em que podemos ajudar?' },
-            { sender: 'caller', text: 'Bom dia, a minha Renault Master matrícula 19-ML-83 acendeu a luz de injeção. Queria marcar um diagnóstico hoje à tarde.' },
-            { sender: 'ai', text: 'Com certeza. O Auto-Diagnóstico Computorizado Multimarca tem o valor base de 35,00 € (+ IVA). Registámos pré-marcação para hoje às 14:30 na Zona Comercial dos Valados.' }
+            { sender: 'caller', text: 'Bom dia, a minha Renault Master matrícula 19-ML-83 acendeu a luz de injeção.' },
+            { sender: 'ai', text: 'O Auto-Diagnóstico Computorizado Multimarca tem o valor base de 35,00 € (+ IVA).' }
           ]
         }
       ],
@@ -307,87 +310,164 @@
     };
   }
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return getDefaultState();
-      return mergeWithDefault(JSON.parse(raw));
-    } catch (err) {
-      console.warn('Erro ao ler localStorage:', err);
-      return getDefaultState();
-    }
-  }
-
   function isHttpOrigin() {
     return window.location.protocol === 'http:' || window.location.protocol === 'https:';
   }
 
-  async function saveState(state) {
-    state.updatedAt = Date.now();
-    const json = JSON.stringify(state);
-    try {
-      localStorage.setItem(STORAGE_KEY, json);
-    } catch (err) {
-      console.error('Erro ao guardar localStorage:', err);
-    }
+  function buildPublicProjection(state) {
+    return {
+      updatedAt: state.updatedAt || 0,
+      workshop: state.workshop,
+      settings: {
+        ivaRate: state.settings.ivaRate,
+        aiGreeting: state.settings.aiGreeting,
+        aiNotes: state.settings.aiNotes,
+        ttsEnabled: state.settings.ttsEnabled,
+        autoAnswer: state.settings.autoAnswer
+      },
+      services: (state.services || []).filter(s => s.visible !== false)
+    };
+  }
 
+  function loadPublicFallback() {
+    try {
+      const raw = localStorage.getItem(PUBLIC_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return mergeWithDefault(parsed);
+      }
+    } catch (_) {}
+    return mergeWithDefault(buildPublicProjection(getDefaultState()));
+  }
+
+  async function fetchPublicData() {
     if (isHttpOrigin()) {
       try {
-        await fetch('/api/state', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: json
-        });
-      } catch (err) {
-        console.warn('Falha ao sincronizar com /api/state:', err);
-      }
-    }
-  }
-
-  async function syncFromServer(currentState) {
-    if (!isHttpOrigin()) return { changed: false, state: currentState };
-    try {
-      const res = await fetch('/api/state', { cache: 'no-store' });
-      if (!res.ok) return { changed: false, state: currentState };
-      const data = await res.json();
-      if (data && !data.empty && Array.isArray(data.services)) {
-        const merged = mergeWithDefault(data);
-        const curTs = Number(currentState.updatedAt || 0);
-        const srvTs = Number(merged.updatedAt || 0);
-        if (srvTs > curTs || curTs === 0) {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-          } catch (_) {}
-          return { changed: true, state: merged };
+        const res = await fetch('/api/public', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          const normalized = mergeWithDefault({
+            updatedAt: data.updatedAt || 0,
+            workshop: data.workshop,
+            settings: data.publicSettings || {},
+            services: data.services || DEFAULT_SERVICES
+          });
+          try { localStorage.setItem(PUBLIC_CACHE_KEY, JSON.stringify(buildPublicProjection(normalized))); } catch (_) {}
+          return normalized;
         }
-      }
-    } catch (err) {
-      // Silencioso se servido de forma estática sem /api/state
+      } catch (_) {}
     }
-    return { changed: false, state: currentState };
+    return loadPublicFallback();
   }
 
-  function subscribeSync(getCurrentState, onChange) {
-    // 1. Instant cross-tab sync via localStorage 'storage' event
+  function subscribePublicSync(getCurrentState, onChange) {
     window.addEventListener('storage', (e) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
+      if (e.key === PUBLIC_CACHE_KEY && e.newValue) {
         try {
-          const parsed = mergeWithDefault(JSON.parse(e.newValue));
-          onChange(parsed);
+          onChange(mergeWithDefault(JSON.parse(e.newValue)));
         } catch (_) {}
       }
     });
 
-    // 2. Lightweight server poll when running via server.ps1 (syncs across different browsers/devices)
     if (isHttpOrigin()) {
       setInterval(async () => {
         const cur = getCurrentState();
-        const result = await syncFromServer(cur);
-        if (result.changed) {
-          onChange(result.state);
+        const latest = await fetchPublicData();
+        if (Number(latest.updatedAt || 0) !== Number(cur.updatedAt || 0)) {
+          onChange(latest);
         }
       }, 3500);
     }
+  }
+
+  async function submitClientBooking(booking, clientToken) {
+    if (isHttpOrigin()) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (clientToken) headers['Authorization'] = `Bearer ${clientToken}`;
+      const res = await fetch('/api/client/booking', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(booking)
+      });
+      if (!res.ok) throw new Error('Falha ao enviar marcação.');
+      return await res.json();
+    }
+    const ownerState = loadOwnerOfflineFallback();
+    ownerState.bookings.unshift({
+      ...booking,
+      id: 'AG-' + Date.now().toString().slice(-3),
+      userId: clientToken || ''
+    });
+    ownerState.updatedAt = Date.now();
+    localStorage.setItem(OWNER_OFFLINE_KEY, JSON.stringify(ownerState));
+    return { ok: true };
+  }
+
+  async function submitClientCall(callRecord, clientToken) {
+    if (isHttpOrigin()) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (clientToken) headers['Authorization'] = `Bearer ${clientToken}`;
+      const res = await fetch('/api/client/call', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(callRecord)
+      });
+      if (!res.ok) throw new Error('Falha ao registar chamada.');
+      return await res.json();
+    }
+    const ownerState = loadOwnerOfflineFallback();
+    ownerState.calls.unshift({
+      ...callRecord,
+      id: 'CH-' + Date.now().toString().slice(-4),
+      userId: clientToken || ''
+    });
+    ownerState.updatedAt = Date.now();
+    localStorage.setItem(OWNER_OFFLINE_KEY, JSON.stringify(ownerState));
+    return { ok: true };
+  }
+
+  /* ---- OWNER PRIVATE STATE (Strictly requires Owner Token on server) ---- */
+
+  function loadOwnerOfflineFallback() {
+    try {
+      const raw = localStorage.getItem(OWNER_OFFLINE_KEY);
+      if (raw) return mergeWithDefault(JSON.parse(raw));
+    } catch (_) {}
+    return getDefaultState();
+  }
+
+  async function fetchOwnerState(ownerToken) {
+    if (isHttpOrigin()) {
+      const res = await fetch('/api/owner/state', {
+        cache: 'no-store',
+        headers: { 'Authorization': `Bearer ${ownerToken}` }
+      });
+      if (!res.ok) throw new Error('Não autorizado.');
+      const data = await res.json();
+      const merged = mergeWithDefault(data);
+      try { localStorage.setItem(PUBLIC_CACHE_KEY, JSON.stringify(buildPublicProjection(merged))); } catch (_) {}
+      return merged;
+    }
+    return loadOwnerOfflineFallback();
+  }
+
+  async function saveOwnerState(state, ownerToken) {
+    state.updatedAt = Date.now();
+    try { localStorage.setItem(PUBLIC_CACHE_KEY, JSON.stringify(buildPublicProjection(state))); } catch (_) {}
+    if (isHttpOrigin()) {
+      const res = await fetch('/api/owner/state', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${ownerToken}`
+        },
+        body: JSON.stringify(state)
+      });
+      if (!res.ok) throw new Error('Falha ao guardar na oficina.');
+      return true;
+    }
+    localStorage.setItem(OWNER_OFFLINE_KEY, JSON.stringify(state));
+    return true;
   }
 
   function clearSampleData(state) {
@@ -401,15 +481,6 @@
       task: 'Posto livre'
     }));
     return state;
-  }
-
-  function resetToDefaults() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (_) {}
-    const fresh = getDefaultState();
-    saveState(fresh);
-    return fresh;
   }
 
   function formatMoney(value) {
@@ -452,18 +523,19 @@
   }
 
   global.CentroDieselStore = {
-    STORAGE_KEY,
     CATEGORY_FALLBACKS,
     DEFAULT_SERVICES,
     getTodayISO,
     getDefaultState,
     mergeWithDefault,
-    loadState,
-    saveState,
-    syncFromServer,
-    subscribeSync,
+    fetchPublicData,
+    subscribePublicSync,
+    submitClientBooking,
+    submitClientCall,
+    loadOwnerOfflineFallback,
+    fetchOwnerState,
+    saveOwnerState,
     clearSampleData,
-    resetToDefaults,
     formatMoney,
     calcWithVat,
     escapeHtml,

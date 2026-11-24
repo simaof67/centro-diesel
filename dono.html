@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Centro Diesel — Área do Dono, Tabela de Preços &amp; Escritório</title>
+  <title>Centro Diesel — Site Privado do Dono, Preços &amp; Segurança</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,27 +13,41 @@
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased">
 
-  <!-- OWNER PIN LOCK OVERLAY -->
-  <div id="owner-pin-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-7 text-center text-white shadow-2xl space-y-5">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg">
-        CD
+  <!-- EXCLUSIVE OWNER AUTHENTICATION OVERLAY -->
+  <div id="owner-auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-7 text-white shadow-2xl space-y-5">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg">
+          CD
+        </div>
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Site Exclusivo do Proprietário</div>
+        <h1 class="text-xl font-extrabold">Área Privada — Centro Diesel</h1>
+        <p class="text-xs text-slate-400">Autentique-se com a sua conta de Dono para gerir preços, instruções da IA e secretaria. Contas de cliente são bloqueadas.</p>
       </div>
-      <div>
-        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Acesso Reservado</div>
-        <h1 class="text-xl font-extrabold mt-1">Área do Dono &amp; Escritório</h1>
-        <p class="text-xs text-slate-400 mt-1">Introduza o PIN para editar preços, configurar a IA e gerir a oficina.</p>
-      </div>
-      <form id="form-pin-unlock" class="space-y-3">
-        <input id="pin-input" type="password" inputmode="numeric" maxlength="10" placeholder="PIN (padrão: 1234)" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-center text-lg font-extrabold tracking-widest text-amber-400 focus:border-amber-500 focus:outline-none" autofocus />
-        <div id="pin-error" class="hidden text-xs text-rose-400 font-semibold">PIN incorreto. Tente novamente (padrão: 1234).</div>
+
+      <form id="form-owner-login" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nome de Utilizador *</label>
+          <input id="owner-login-user" type="text" required placeholder="dono" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:border-amber-500 focus:outline-none" autofocus />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Palavra-passe *</label>
+          <input id="owner-login-pass" type="password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:border-amber-500 focus:outline-none" />
+        </div>
+        <div id="owner-login-error" class="hidden text-xs text-rose-400 font-semibold"></div>
         <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition">
-          Entrar no Painel do Dono
+          Entrar na Área do Dono
         </button>
       </form>
-      <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-        <span>PIN padrão: <strong class="text-slate-200">1234</strong></span>
-        <a href="index.html" class="text-amber-400 hover:underline font-semibold">&larr; Voltar ao Site Cliente</a>
+
+      <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-1">
+        <div><strong>Credenciais iniciais do Dono:</strong></div>
+        <div>Utilizador: <code class="text-amber-400 font-bold">dono</code> &nbsp;|&nbsp; Palavra-passe: <code class="text-amber-400 font-bold">CentroDiesel2026!</code></div>
+        <div class="text-slate-400">Pode alterar estes dados na aba <strong>Conta &amp; Segurança</strong> após entrar.</div>
+      </div>
+
+      <div class="text-center text-xs">
+        <a href="index.html" class="text-slate-400 hover:text-amber-400 transition">&larr; Ir para o Site Público dos Clientes</a>
       </div>
     </div>
   </div>
@@ -47,7 +61,7 @@
         <div class="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-sm">CD</div>
         <div>
           <div class="font-bold text-sm leading-tight">Centro Diesel — Dono</div>
-          <div class="text-[11px] text-amber-400">Gestão de Preços &amp; IA</div>
+          <div class="text-[11px] text-amber-400">Gestão Privada</div>
         </div>
       </div>
       <button id="btn-mobile-menu" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">
@@ -64,7 +78,7 @@
           </div>
           <div>
             <h1 class="font-extrabold text-white text-base tracking-tight leading-tight">CENTRO DIESEL</h1>
-            <p class="text-[11px] text-amber-400 font-semibold leading-tight mt-0.5">Painel Privado do Dono</p>
+            <p class="text-[11px] text-amber-400 font-semibold leading-tight mt-0.5" id="sidebar-owner-user">@dono • Privado</p>
           </div>
         </div>
         <button id="btn-close-mobile-menu" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
@@ -117,6 +131,15 @@
           </span>
           <span id="nav-badge-wo" class="px-2 py-0.5 text-[11px] rounded-full bg-blue-500/20 text-blue-300 font-semibold">0</span>
         </button>
+
+        <div class="px-4 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Administração</div>
+
+        <button data-tab="account" class="nav-item w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-left hover:bg-slate-900">
+          <span class="flex items-center gap-3">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            Conta &amp; Segurança
+          </span>
+        </button>
       </nav>
 
       <!-- Sidebar Footer -->
@@ -129,9 +152,13 @@
           <span>Motor Assistente:</span>
           <span id="sidebar-engine-badge" class="font-semibold text-emerald-400">Local IA</span>
         </div>
-        <button id="btn-open-settings" class="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
+        <button id="btn-open-settings" class="w-full mt-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
           <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-          Definições, PIN, Gemini &amp; Dados
+          Definições, Gemini &amp; Dados
+        </button>
+        <button id="btn-owner-logout" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-rose-950/70 hover:bg-rose-900 border border-rose-800/60 text-rose-200 text-xs font-semibold transition">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          Terminar Sessão
         </button>
       </div>
     </aside>
@@ -168,11 +195,9 @@
       <main class="flex-1 p-4 sm:p-6 space-y-6">
 
         <!-- ========================================================= -->
-        <!-- TAB 1 (DEFAULT): PREÇOS & REGRAS DA IA                    -->
+        <!-- TAB 1: PREÇOS & REGRAS DA IA                              -->
         <!-- ========================================================= -->
         <section id="tab-prices" class="tab-panel space-y-5">
-
-          <!-- Owner AI Rules & Workshop Hours Card -->
           <div class="bg-slate-950 text-white rounded-2xl p-5 shadow-md border border-slate-800 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -180,7 +205,7 @@
                   <i data-lucide="bot" class="w-3.5 h-3.5"></i> O que a Assistente IA diz aos clientes
                 </div>
                 <h3 class="text-base font-extrabold mt-0.5">Horário, Saudação &amp; Instruções da Gerência para a IA</h3>
-                <p class="text-xs text-slate-400">Escreva aqui promoções, condições ou avisos (ex.: "Diagnóstico grátis na reparação de 4 injetores") e a IA informa os clientes ao telefone e no site.</p>
+                <p class="text-xs text-slate-400">Escreva aqui promoções, condições ou avisos e a IA informa os clientes ao telefone e no site.</p>
               </div>
               <button id="btn-save-ai-rules" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition shrink-0">
                 <i data-lucide="save" class="w-4 h-4"></i> Guardar Regras da IA
@@ -203,21 +228,18 @@
             </div>
           </div>
 
-          <!-- Owner Price Controls Bar -->
           <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 class="text-lg font-extrabold text-slate-900">Tabela de Preços &amp; Serviços de Arranjo</h3>
                 <p class="text-xs text-slate-500">Altere os valores abaixo: o Site do Cliente e a Assistente Telefónica passam a usar os novos preços imediatamente.</p>
               </div>
-
               <button id="btn-new-service" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 Adicionar Novo Arranjo / Serviço
               </button>
             </div>
 
-            <!-- Filters & Bulk Price Tools -->
             <div class="pt-3 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div class="flex flex-wrap items-center gap-2">
                 <input id="price-search" type="text" placeholder="Pesquisar serviço ou código..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-56 focus:border-amber-500 focus:outline-none" />
@@ -231,7 +253,6 @@
                 </div>
               </div>
 
-              <!-- Bulk Price & IVA Controls -->
               <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
                 <span class="text-[11px] font-bold text-slate-600 px-1">Ajuste em Massa:</span>
                 <button data-bulk="-5" class="bulk-pct-btn px-2 py-1 rounded bg-white border border-slate-300 hover:bg-rose-50 text-xs font-bold text-rose-700">-5%</button>
@@ -249,12 +270,11 @@
             </div>
           </div>
 
-          <!-- Services Real-Photo Cards Grid -->
           <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
         </section>
 
         <!-- ========================================================= -->
-        <!-- TAB 2: CENTRAL TELEFÓNICA IA (TESTAR & REGISTO CHAMADAS)  -->
+        <!-- TAB 2: CENTRAL TELEFÓNICA IA                              -->
         <!-- ========================================================= -->
         <section id="tab-assistant" class="tab-panel hidden space-y-6">
           <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
@@ -290,7 +310,6 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <!-- Phone Console -->
             <div class="lg:col-span-4 bg-slate-950 text-white rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4 border border-slate-800">
               <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -355,7 +374,6 @@
               </div>
             </div>
 
-            <!-- Live Transcript -->
             <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px]">
               <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-2xl">
                 <div>
@@ -373,7 +391,6 @@
               </form>
             </div>
 
-            <!-- Triage Panel -->
             <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between space-y-4">
               <div class="space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -417,7 +434,6 @@
             </div>
           </div>
 
-          <!-- Call History Table -->
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
@@ -431,7 +447,7 @@
         </section>
 
         <!-- ========================================================= -->
-        <!-- TAB 3: PAINEL DE ESCRITÓRIO (DASHBOARD)                   -->
+        <!-- TAB 3: PAINEL DE ESCRITÓRIO                               -->
         <!-- ========================================================= -->
         <section id="tab-dashboard" class="tab-panel hidden space-y-6">
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
@@ -696,6 +712,99 @@
           </div>
         </section>
 
+        <!-- ========================================================= -->
+        <!-- TAB 5: CONTA & SEGURANÇA DO DONO                          -->
+        <!-- ========================================================= -->
+        <section id="tab-account" class="tab-panel hidden space-y-6">
+          <!-- Owner Profile Banner -->
+          <div class="bg-slate-950 text-white rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-md border border-slate-800">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg">CD</div>
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-extrabold text-base" id="owner-acct-fullname">Proprietário Centro Diesel</span>
+                  <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold" id="owner-acct-username">@dono</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">Proprietário / Administrador</span>
+                </div>
+                <div class="text-xs text-slate-400 mt-0.5" id="owner-acct-email">mfrcentrodiesel@gmail.com</div>
+              </div>
+            </div>
+            <div class="px-3 py-1.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+              Encriptação PBKDF2-HMAC-SHA256 Ativa
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Edit Owner Profile -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+                <i data-lucide="user-cog" class="w-4 h-4 text-amber-600"></i>
+                Alterar Dados da Conta do Dono
+              </h3>
+              <form id="form-owner-profile" class="space-y-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Nome de Utilizador (Login) *</label>
+                  <input id="oa-username" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold lowercase" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Nome Completo *</label>
+                  <input id="oa-fullname" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">E-mail do Proprietário *</label>
+                  <input id="oa-email" type="email" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                  Guardar Dados da Conta
+                </button>
+              </form>
+            </div>
+
+            <!-- Change Owner Password -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <h3 class="font-bold text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+                <i data-lucide="key-round" class="w-4 h-4 text-amber-600"></i>
+                Alterar Palavra-passe do Dono
+              </h3>
+              <form id="form-owner-password" class="space-y-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Palavra-passe Atual *</label>
+                  <input id="oa-cur-pass" type="password" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Nova Palavra-passe (mín. 6 car.) *</label>
+                  <input id="oa-new-pass" type="password" minlength="6" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Confirmar Nova Palavra-passe *</label>
+                  <input id="oa-conf-pass" type="password" minlength="6" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition">
+                  Atualizar Palavra-passe
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Registered Clients Directory (Privacy Protected: Masked Emails, Zero Passwords) -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="users" class="w-4 h-4 text-amber-600"></i>
+                  Clientes Registados no Site
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">As palavras-passe estão encriptadas (PBKDF2) e os e-mails aparecem mascarados para privacidade total.</p>
+              </div>
+              <button id="btn-refresh-clients" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">
+                Atualizar Lista
+              </button>
+            </div>
+            <div id="owner-clients-list" class="divide-y divide-slate-100 text-xs"></div>
+          </div>
+        </section>
+
       </main>
     </div>
   </div>
@@ -885,25 +994,11 @@
   <div id="modal-settings" class="modal-backdrop hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">Definições, PIN, Gemini API &amp; Dados</h3>
+        <h3 class="font-extrabold text-lg text-slate-900">Definições, Gemini API &amp; Dados</h3>
         <button data-close-modal="modal-settings" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
       <div class="space-y-4 text-xs">
-        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-          <div class="font-bold text-slate-900">Segurança da Área do Dono</div>
-          <div class="grid grid-cols-2 gap-3 items-center">
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">PIN de Acesso (Dono)</label>
-              <input id="cfg-owner-pin" type="text" maxlength="10" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold" />
-            </div>
-            <label class="inline-flex items-center gap-2 pt-5 font-semibold text-slate-700 cursor-pointer">
-              <input id="cfg-require-pin" type="checkbox" class="rounded text-amber-600" />
-              Pedir PIN ao abrir dono.html
-            </label>
-          </div>
-        </div>
-
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
           <div class="font-bold text-slate-900">Integração Opcional Google Gemini API</div>
           <div>
@@ -969,6 +1064,7 @@
   <div id="print-sheet"></div>
 
   <script src="store.js"></script>
+  <script src="auth.js"></script>
   <script src="ai-engine.js"></script>
   <script src="dono.js"></script>
 </body>

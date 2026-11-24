@@ -1,16 +1,20 @@
 /* =========================================================================
    CENTRO DIESEL — Área Privada do Dono & Escritório (dono.html + dono.js)
-   Sincroniza preços, regras da IA, chamadas e marcações com o Site do Cliente.
+   Autenticação exclusiva por Utilizador + Palavra-passe + Conta & Segurança
    ========================================================================= */
 
 (function () {
   const Store = window.CentroDieselStore;
+  const Auth = window.CentroDieselAuth;
   const AI = window.CentroDieselAI;
 
-  let state = Store.loadState();
+  let state = Store.getDefaultState();
+  let currentOwner = null;
+  let maskedClients = [];
   let activeTab = 'prices';
   let activeOfficeSubtab = 'workorders';
   let selectedPriceCategory = 'Todas';
+  let pollTimer = null;
 
   let activeCall = {
     inProgress: false,
@@ -47,6 +51,10 @@
     office: {
       title: 'Secretaria, Folhas de Obra & Orçamentos A4',
       subtitle: 'Receção de viaturas, agenda de marcações e emissão de orçamentos'
+    },
+    account: {
+      title: 'Conta & Segurança do Proprietário',
+      subtitle: 'Altere o seu nome de utilizador, palavra-passe e consulte clientes com privacidade protegida'
     }
   };
 
@@ -74,6 +82,9 @@
     if (window.innerWidth < 1024) {
       document.getElementById('sidebar').classList.add('hidden');
     }
+    if (tabId === 'account' && currentOwner) {
+      loadMaskedClients();
+    }
     renderAll();
   }
 
@@ -91,15 +102,92 @@
   }
 
   /* =======================================================================
-     PIN LOCK
+     OWNER AUTHENTICATION & ACCOUNT TAB
      ======================================================================= */
 
-  function checkOwnerPin() {
-    const overlay = document.getElementById('owner-pin-overlay');
-    if (!state.settings.requirePin || sessionStorage.getItem('cd_owner_unlocked') === '1') {
+  async function initOwnerSession() {
+    const owner = await Auth.getOwnerMe();
+    const overlay = document.getElementById('owner-auth-overlay');
+    if (owner) {
+      currentOwner = owner;
       overlay.classList.add('hidden');
+      try {
+        state = await Store.fetchOwnerState(Auth.getOwnerToken());
+      } catch (err) {
+        console.warn('Erro ao carregar estado do dono:', err);
+      }
+      await loadMaskedClients();
+      startOwnerSyncPoll();
+      renderAll();
     } else {
+      currentOwner = null;
       overlay.classList.remove('hidden');
+      stopOwnerSyncPoll();
+    }
+  }
+
+  async function loadMaskedClients() {
+    try {
+      maskedClients = await Auth.getOwnerClientsMasked();
+      renderOwnerAccountTab();
+    } catch (_) {}
+  }
+
+  function startOwnerSyncPoll() {
+    stopOwnerSyncPoll();
+    if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
+    pollTimer = setInterval(async () => {
+      if (!currentOwner) return;
+      try {
+        const latest = await Store.fetchOwnerState(Auth.getOwnerToken());
+        if (Number(latest.updatedAt || 0) > Number(state.updatedAt || 0)) {
+          state = latest;
+          renderAll();
+        }
+      } catch (_) {}
+    }, 5000);
+  }
+
+  function stopOwnerSyncPoll() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  function renderOwnerAccountTab() {
+    if (!currentOwner) return;
+    document.getElementById('sidebar-owner-user').textContent = `@${currentOwner.username} • Privado`;
+    document.getElementById('owner-acct-fullname').textContent = currentOwner.fullName;
+    document.getElementById('owner-acct-username').textContent = `@${currentOwner.username}`;
+    document.getElementById('owner-acct-email').textContent = currentOwner.email;
+
+    const uInput = document.getElementById('oa-username');
+    const fInput = document.getElementById('oa-fullname');
+    const eInput = document.getElementById('oa-email');
+    if (document.activeElement !== uInput) uInput.value = currentOwner.username || '';
+    if (document.activeElement !== fInput) fInput.value = currentOwner.fullName || '';
+    if (document.activeElement !== eInput) eInput.value = currentOwner.email || '';
+
+    const listEl = document.getElementById('owner-clients-list');
+    if (!maskedClients || maskedClients.length === 0) {
+      listEl.innerHTML = `<div class="py-5 text-center text-slate-400 italic">Nenhum cliente registado até ao momento.</div>`;
+    } else {
+      listEl.innerHTML = maskedClients.map(c => `
+        <div class="py-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-900">${Store.escapeHtml(c.fullName)}</span>
+              <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono text-[11px] font-bold">@${Store.escapeHtml(c.username)}</span>
+            </div>
+            <div class="text-slate-500 mt-0.5">
+              E-mail: <strong class="text-slate-700">${Store.escapeHtml(c.emailMasked)}</strong>
+              ${c.phone ? ` • Tel: ${Store.escapeHtml(c.phone)}` : ''}
+              ${c.vehicle ? ` • Viatura: ${Store.escapeHtml(c.vehicle)}` : ''}
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">Password Encriptada</span>
+        </div>`).join('');
     }
   }
 
@@ -171,7 +259,6 @@
                 <span>Garantia: <strong>${Store.escapeHtml(srv.warranty)}</strong></span>
               </div>
             </div>
-
             <div class="p-4 space-y-2">
               <h4 class="font-extrabold text-sm text-slate-900 leading-snug">${Store.escapeHtml(srv.name)}</h4>
               <p class="text-xs text-slate-500 leading-relaxed">${Store.escapeHtml(srv.description)}</p>
@@ -185,15 +272,11 @@
                 c/ IVA (${iva}%): ${Store.formatMoney(withVat)}
               </span>
             </div>
-
             <div class="flex items-center gap-1.5">
               <button onclick="nudgeServicePrice('${srv.id}', -5)" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-rose-50 text-xs font-bold text-rose-700">-5€</button>
               <div class="relative flex-1">
                 <input
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  value="${srv.price}"
+                  type="number" step="0.5" min="0" value="${srv.price}"
                   oninput="livePreviewCardVat('${srv.id}', this.value)"
                   onchange="setServicePrice('${srv.id}', this.value)"
                   class="w-full px-3 py-1.5 pr-7 rounded-lg border border-amber-300 bg-white text-sm font-extrabold text-center text-slate-900 focus:border-amber-500 focus:outline-none"
@@ -202,7 +285,6 @@
               </div>
               <button onclick="nudgeServicePrice('${srv.id}', 5)" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-emerald-50 text-xs font-bold text-emerald-700">+5€</button>
             </div>
-
             <div class="flex items-center justify-between pt-1">
               <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 cursor-pointer">
                 <input type="checkbox" ${srv.visible !== false ? 'checked' : ''} onchange="toggleServiceVisibility('${srv.id}', this.checked)" class="rounded text-amber-600" />
@@ -214,8 +296,7 @@
               </div>
             </div>
           </div>
-        </article>
-      `;
+        </article>`;
     }).join('');
   }
 
@@ -228,35 +309,34 @@
     }
   };
 
-  async function syncAfterPriceChange(toastMsg, highlightId = null) {
-    await Store.saveState(state);
+  async function saveOwnerChanges(toastMsg, highlightId = null) {
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     renderAll();
     if (highlightId) {
-      const card = document.getElementById(`service-card-${highlightId}`);
-      if (card) card.classList.add('price-updated-flash');
+      document.getElementById(`service-card-${highlightId}`)?.classList.add('price-updated-flash');
     }
-    Store.showToast(toastMsg + ' Site do Cliente e IA sincronizados!', 'success');
+    if (toastMsg) Store.showToast(toastMsg, 'success');
   }
 
   window.setServicePrice = function (serviceId, newPrice) {
     const srv = state.services.find(s => s.id === serviceId);
     if (!srv) return;
     srv.price = Math.max(0, Math.round((parseFloat(newPrice) || 0) * 100) / 100);
-    syncAfterPriceChange(`Preço de "${srv.code}" atualizado para ${Store.formatMoney(srv.price)} s/ IVA.`, serviceId);
+    saveOwnerChanges(`Preço de "${srv.code}" atualizado para ${Store.formatMoney(srv.price)} s/ IVA! Site e IA sincronizados.`, serviceId);
   };
 
   window.nudgeServicePrice = function (serviceId, delta) {
     const srv = state.services.find(s => s.id === serviceId);
     if (!srv) return;
     srv.price = Math.max(0, Math.round((Number(srv.price) + delta) * 100) / 100);
-    syncAfterPriceChange(`Preço de "${srv.code}" ajustado para ${Store.formatMoney(srv.price)} s/ IVA.`, serviceId);
+    saveOwnerChanges(`Preço de "${srv.code}" ajustado para ${Store.formatMoney(srv.price)} s/ IVA!`, serviceId);
   };
 
   window.toggleServiceVisibility = async function (serviceId, visible) {
     const srv = state.services.find(s => s.id === serviceId);
     if (!srv) return;
     srv.visible = visible;
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     Store.showToast(`"${srv.code}" ${visible ? 'publicado' : 'ocultado'} no Site do Cliente.`, 'info');
   };
 
@@ -265,9 +345,7 @@
     if (!srv) return;
     if (!confirm(`Remover "${srv.name}" da tabela?`)) return;
     state.services = state.services.filter(s => s.id !== serviceId);
-    await Store.saveState(state);
-    renderAll();
-    Store.showToast(`Serviço "${srv.code}" removido.`, 'warning');
+    await saveOwnerChanges(`Serviço "${srv.code}" removido.`);
   };
 
   async function applyBulkPercentage(pct) {
@@ -283,9 +361,7 @@
         count++;
       }
     });
-    await Store.saveState(state);
-    renderAll();
-    Store.showToast(`Ajuste de ${numPct > 0 ? '+' : ''}${numPct}% aplicado a ${count} serviços!`, 'success');
+    await saveOwnerChanges(`Ajuste de ${numPct > 0 ? '+' : ''}${numPct}% aplicado a ${count} serviços!`);
   }
 
   window.openEditServiceModal = function (serviceId = null) {
@@ -324,7 +400,7 @@
   };
 
   /* =======================================================================
-     ASSISTANT TAB (PHONE TESTER + CALL LOG)
+     ASSISTANT TAB
      ======================================================================= */
 
   function renderAssistantTab() {
@@ -430,12 +506,7 @@
       callerPhone: phone,
       callerName: name,
       messages: [],
-      triage: {
-        intent: 'Chamada Atendida — Em Curso',
-        vehicle: '',
-        services: [],
-        totalWithVat: 0
-      }
+      triage: { intent: 'Chamada Atendida — Em Curso', vehicle: '', services: [], totalWithVat: 0 }
     };
 
     document.getElementById('call-status-pill').textContent = 'Em Chamada';
@@ -466,6 +537,8 @@
 
     state.calls.unshift({
       id: 'CH-' + Date.now().toString().slice(-4),
+      userId: '',
+      username: '',
       timestamp: new Date().toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }),
       phone: activeCall.callerPhone,
       callerName: activeCall.callerName || 'Teste Telefónico',
@@ -476,7 +549,7 @@
       status: activeCall.triage.services.length > 0 ? 'Orçamento Informado' : 'Informação Prestada',
       messages: [...activeCall.messages]
     });
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
 
     activeCall.inProgress = false;
     document.getElementById('call-status-pill').textContent = 'Chamada Gravada';
@@ -484,9 +557,8 @@
     document.getElementById('call-avatar-ring').classList.remove('call-ring-active');
     document.getElementById('btn-start-call').disabled = false;
     document.getElementById('btn-end-call').disabled = true;
-
     renderAll();
-    Store.showToast('Chamada guardada no Registo de Chamadas.', 'success');
+    Store.showToast('Chamada guardada no Registo.', 'success');
   }
 
   async function handleCallerMessage(rawText) {
@@ -524,13 +596,10 @@
   }
 
   function toggleMicrophone() {
-    if (isListeningMic) {
-      stopListeningMic();
-      return;
-    }
+    if (isListeningMic) { stopListeningMic(); return; }
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
-      Store.showToast('Microfone Web Speech indisponível neste navegador. Use texto ou os cenários rápidos.', 'warning');
+      Store.showToast('Microfone indisponível neste navegador.', 'warning');
       return;
     }
     if (!activeCall.inProgress) startSimulatedCall();
@@ -540,11 +609,10 @@
     speechRecognition.lang = 'pt-PT';
     speechRecognition.interimResults = false;
     speechRecognition.maxAlternatives = 1;
-
     speechRecognition.onstart = () => {
       isListeningMic = true;
       document.getElementById('voice-wave').classList.add('listening');
-      document.getElementById('mic-btn-label').textContent = 'A ouvir... Clique para parar';
+      document.getElementById('mic-btn-label').textContent = 'A ouvir...';
     };
     speechRecognition.onresult = (e) => {
       const txt = e.results[0][0].transcript;
@@ -574,6 +642,7 @@
         <div class="space-y-0.5">
           <div class="flex flex-wrap items-center gap-2">
             <span class="font-bold text-xs text-slate-900">${Store.escapeHtml(c.callerName)}</span>
+            ${c.username ? `<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold">@${Store.escapeHtml(c.username)}</span>` : ''}
             <span class="text-xs text-slate-500 font-mono">${Store.escapeHtml(c.phone)}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${Store.escapeHtml(c.intent)}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">${Store.escapeHtml(c.status)}</span>
@@ -590,7 +659,7 @@
   window.viewTranscript = function (callId) {
     const call = state.calls.find(c => c.id === callId);
     if (!call) return;
-    document.getElementById('modal-transcript-title').textContent = `Chamada ${call.id} — ${call.callerName} (${call.phone})`;
+    document.getElementById('modal-transcript-title').textContent = `Chamada ${call.id} — ${call.callerName}`;
     document.getElementById('modal-transcript-body').innerHTML = `
       <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 gap-2 text-[11px]">
         <div><strong>Data/Hora:</strong> ${Store.escapeHtml(call.timestamp)}</div>
@@ -611,7 +680,7 @@
   };
 
   /* =======================================================================
-     DASHBOARD TAB
+     DASHBOARD & OFFICE
      ======================================================================= */
 
   function renderDashboard() {
@@ -682,18 +751,9 @@
     const bay = state.bays.find(b => b.id === bayId);
     if (!bay) return;
     bay.status = newStatus;
-    if (newStatus === 'Livre') {
-      bay.vehicle = 'Disponível';
-      bay.task = 'Posto pronto';
-    }
-    await Store.saveState(state);
-    renderDashboard();
-    Store.showToast(`${bay.name} marcada como "${newStatus}".`, 'info');
+    if (newStatus === 'Livre') { bay.vehicle = 'Disponível'; bay.task = 'Posto pronto'; }
+    await saveOwnerChanges(`${bay.name} marcada como "${newStatus}".`);
   };
-
-  /* =======================================================================
-     OFFICE TAB (WORK ORDERS, BOOKINGS, QUOTES & PRINT)
-     ======================================================================= */
 
   function renderOfficeSection() {
     renderWorkOrders();
@@ -770,9 +830,7 @@
     const wo = state.workOrders.find(w => w.id === id);
     if (!wo) return;
     wo.status = newStatus;
-    await Store.saveState(state);
-    renderAll();
-    Store.showToast(`Folha ${wo.id} atualizada para "${newStatus}".`, 'info');
+    await saveOwnerChanges(`Folha ${wo.id} atualizada para "${newStatus}".`);
   };
 
   window.openEditWorkOrderModal = function (id = null) {
@@ -824,6 +882,7 @@
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-bold text-sm text-slate-900">${Store.escapeHtml(b.client)}</span>
+              ${b.username ? `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono text-[10px] font-bold">@${Store.escapeHtml(b.username)}</span>` : ''}
               <span class="text-xs text-slate-500">${Store.escapeHtml(b.phone)}</span>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${sourceBadge[b.source] || 'bg-slate-100'}">${Store.escapeHtml(b.source)}</span>
             </div>
@@ -853,7 +912,7 @@
       createdAt: Store.getTodayISO(0)
     });
     b.status = 'Em Oficina';
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     switchOfficeSubtab('workorders');
     renderAll();
     Store.showToast(`Folha de Obra aberta para ${b.client}!`, 'success');
@@ -861,9 +920,7 @@
 
   window.deleteBooking = async function (bookingId) {
     state.bookings = state.bookings.filter(b => b.id !== bookingId);
-    await Store.saveState(state);
-    renderAll();
-    Store.showToast('Marcação removida.', 'info');
+    await saveOwnerChanges('Marcação removida.');
   };
 
   function renderQuoteBuilder() {
@@ -953,7 +1010,7 @@
     const existing = state.quoteDraft.items.find(i => i.serviceId === serviceId);
     if (existing) existing.qty += 1;
     else state.quoteDraft.items.push({ serviceId, qty: 1 });
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     renderQuoteBuilder();
   };
 
@@ -962,7 +1019,7 @@
     if (!item) return;
     item.qty += delta;
     if (item.qty <= 0) state.quoteDraft.items.splice(idx, 1);
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     renderQuoteBuilder();
   };
 
@@ -970,13 +1027,13 @@
     const part = state.quoteDraft.extraParts[idx];
     if (!part) return;
     part[field] = field === 'name' ? val : (parseFloat(val) || 0);
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     renderQuoteBuilder();
   };
 
   window.removeExtraPart = async function (idx) {
     state.quoteDraft.extraParts.splice(idx, 1);
-    await Store.saveState(state);
+    await Store.saveOwnerState(state, Auth.getOwnerToken());
     renderQuoteBuilder();
   };
 
@@ -988,7 +1045,7 @@
     state.quoteDraft.vehiclePlate = document.getElementById('q-vehicle-plate').value;
     state.quoteDraft.vehicleModel = document.getElementById('q-vehicle-model').value;
     state.quoteDraft.notes = document.getElementById('q-notes').value;
-    Store.saveState(state);
+    Store.saveOwnerState(state, Auth.getOwnerToken());
   }
 
   function buildPrintHeader(docTitle, docRef) {
@@ -998,10 +1055,7 @@
         <div>
           <div style="font-size:22px;font-weight:800;color:#0f172a;">${Store.escapeHtml(w.brand || 'CENTRO DIESEL')}</div>
           <div style="font-size:12px;font-weight:700;color:#d97706;">${Store.escapeHtml(w.company || 'Manuel Francisco Raposo & Ca. Lda.')}</div>
-          <div style="font-size:11px;color:#475569;margin-top:4px;">
-            ${Store.escapeHtml(w.address || '')}<br/>
-            Tel: ${Store.escapeHtml(w.phone || '296 383 150')} • Email: ${Store.escapeHtml(w.email || 'mfrcentrodiesel@gmail.com')}
-          </div>
+          <div style="font-size:11px;color:#475569;margin-top:4px;">${Store.escapeHtml(w.address || '')}<br/>Tel: ${Store.escapeHtml(w.phone || '296 383 150')} • Email: ${Store.escapeHtml(w.email || '')}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:16px;font-weight:800;color:#0f172a;">${Store.escapeHtml(docTitle)}</div>
@@ -1078,7 +1132,7 @@
   }
 
   /* =======================================================================
-     MASTER RENDER & BOOTSTRAP
+     MASTER RENDER & EVENT WIRING
      ======================================================================= */
 
   function renderAll() {
@@ -1093,47 +1147,87 @@
     renderAssistantTab();
     renderDashboard();
     renderOfficeSection();
+    renderOwnerAccountTab();
 
     if (window.lucide) lucide.createIcons();
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
-    const syncRes = await Store.syncFromServer(state);
-    if (syncRes.changed) state = syncRes.state;
-    checkOwnerPin();
-    renderAll();
+    await initOwnerSession();
 
-    // Sync live bookings & calls made from index.html (Site Cliente)
-    Store.subscribeSync(
-      () => state,
-      (newState) => {
-        state = newState;
-        renderAll();
-      }
-    );
-
-    // PIN Unlock
-    document.getElementById('form-pin-unlock').addEventListener('submit', (e) => {
+    // Owner Login
+    document.getElementById('form-owner-login').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const entered = document.getElementById('pin-input').value.trim();
-      const expected = String(state.settings.ownerPin || '1234');
-      if (entered === expected) {
-        sessionStorage.setItem('cd_owner_unlocked', '1');
-        document.getElementById('owner-pin-overlay').classList.add('hidden');
-        document.getElementById('pin-error').classList.add('hidden');
-      } else {
-        document.getElementById('pin-error').classList.remove('hidden');
+      const errBox = document.getElementById('owner-login-error');
+      errBox.classList.add('hidden');
+      try {
+        await Auth.ownerLogin(
+          document.getElementById('owner-login-user').value,
+          document.getElementById('owner-login-pass').value
+        );
+        e.target.reset();
+        await initOwnerSession();
+        Store.showToast(`Bem-vindo à Área do Dono, @${currentOwner.username}!`, 'success');
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
       }
     });
 
-    // Save Owner AI Rules & Workshop Hours
+    // Owner Logout
+    document.getElementById('btn-owner-logout').addEventListener('click', async () => {
+      await Auth.ownerLogout();
+      currentOwner = null;
+      stopOwnerSyncPoll();
+      document.getElementById('owner-auth-overlay').classList.remove('hidden');
+      Store.showToast('Sessão do proprietário terminada.', 'info');
+    });
+
+    // Owner Account & Security Forms
+    document.getElementById('form-owner-profile').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        currentOwner = await Auth.updateOwnerAccount({
+          username: document.getElementById('oa-username').value,
+          fullName: document.getElementById('oa-fullname').value,
+          email: document.getElementById('oa-email').value
+        });
+        renderOwnerAccountTab();
+        Store.showToast('Dados da conta do dono atualizados!', 'success');
+      } catch (err) {
+        Store.showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('form-owner-password').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const curPass = document.getElementById('oa-cur-pass').value;
+      const newPass = document.getElementById('oa-new-pass').value;
+      const confPass = document.getElementById('oa-conf-pass').value;
+      if (newPass !== confPass) {
+        Store.showToast('A nova palavra-passe e a confirmação não coincidem.', 'error');
+        return;
+      }
+      try {
+        await Auth.updateOwnerAccount({ currentPassword: curPass, newPassword: newPass });
+        e.target.reset();
+        Store.showToast('Palavra-passe do proprietário alterada com segurança!', 'success');
+      } catch (err) {
+        Store.showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('btn-refresh-clients').addEventListener('click', async () => {
+      await loadMaskedClients();
+      Store.showToast('Lista de clientes atualizada.', 'info');
+    });
+
+    // Save AI Rules & Hours
     document.getElementById('btn-save-ai-rules').addEventListener('click', async () => {
       state.workshop.hours = document.getElementById('owner-hours-input').value.trim();
       state.settings.aiGreeting = document.getElementById('owner-ai-greeting').value.trim();
       state.settings.aiNotes = document.getElementById('owner-ai-notes').value.trim();
-      await Store.saveState(state);
-      renderAll();
-      Store.showToast('Regras da IA e horário guardados! Site do Cliente atualizado.', 'success');
+      await saveOwnerChanges('Regras da IA e horário guardados! Site do Cliente atualizado.');
     });
 
     // Navigation & Mobile Menu
@@ -1195,6 +1289,8 @@
       const serviceSummary = activeCall.triage.services.map(s => `${s.qty}x ${s.name}`).join(', ') || activeCall.triage.intent;
       state.bookings.unshift({
         id: 'AG-' + Date.now().toString().slice(-3),
+        userId: '',
+        username: '',
         client: name,
         phone,
         vehicle,
@@ -1204,9 +1300,7 @@
         source: 'Assistente IA',
         status: 'Confirmada'
       });
-      await Store.saveState(state);
-      renderAll();
-      Store.showToast(`Marcação criada na Agenda para ${name}!`, 'success');
+      await saveOwnerChanges(`Marcação criada na Agenda para ${name}!`);
     });
 
     document.getElementById('btn-triage-workorder').addEventListener('click', async () => {
@@ -1226,9 +1320,7 @@
         total: activeCall.triage.totalWithVat,
         createdAt: Store.getTodayISO(0)
       });
-      await Store.saveState(state);
-      renderAll();
-      Store.showToast('Folha de Obra criada!', 'success');
+      await saveOwnerChanges('Folha de Obra criada!');
     });
 
     document.getElementById('btn-triage-quote').addEventListener('click', async () => {
@@ -1239,7 +1331,7 @@
       state.quoteDraft.vehicleModel = vehRaw;
       state.quoteDraft.items = activeCall.triage.services.map(s => ({ serviceId: s.serviceId, qty: s.qty }));
       state.quoteDraft.notes = `Triagem IA: ${activeCall.triage.intent}`;
-      await Store.saveState(state);
+      await Store.saveOwnerState(state, Auth.getOwnerToken());
       switchTab('office');
       switchOfficeSubtab('quotes');
     });
@@ -1247,21 +1339,18 @@
     document.getElementById('ai-tts-toggle').addEventListener('change', (e) => {
       state.settings.ttsEnabled = e.target.checked;
       if (!e.target.checked) AI.stopSpeaking();
-      Store.saveState(state);
+      Store.saveOwnerState(state, Auth.getOwnerToken());
     });
     document.getElementById('ai-auto-answer').addEventListener('change', (e) => {
       state.settings.autoAnswer = e.target.checked;
-      Store.saveState(state);
+      Store.saveOwnerState(state, Auth.getOwnerToken());
     });
     document.getElementById('call-history-search').addEventListener('input', renderCallHistory);
 
     // Prices Tab
     document.getElementById('price-search').addEventListener('input', renderPricesTab);
     document.querySelectorAll('.cat-pill').forEach(pill => {
-      pill.addEventListener('click', () => {
-        selectedPriceCategory = pill.dataset.cat;
-        renderPricesTab();
-      });
+      pill.addEventListener('click', () => { selectedPriceCategory = pill.dataset.cat; renderPricesTab(); });
     });
     document.querySelectorAll('.bulk-pct-btn').forEach(btn => {
       btn.addEventListener('click', () => applyBulkPercentage(btn.dataset.bulk));
@@ -1271,7 +1360,7 @@
     });
     document.getElementById('iva-rate-input').addEventListener('change', (e) => {
       state.settings.ivaRate = Math.max(0, Math.min(30, parseFloat(e.target.value) || 0));
-      syncAfterPriceChange(`Taxa de IVA atualizada para ${state.settings.ivaRate}%.`);
+      saveOwnerChanges(`Taxa de IVA atualizada para ${state.settings.ivaRate}%.`);
     });
     document.getElementById('btn-new-service').addEventListener('click', () => openEditServiceModal(null));
 
@@ -1281,7 +1370,7 @@
       const reader = new FileReader();
       reader.onload = (ev) => {
         document.getElementById('srv-image').value = ev.target.result;
-        Store.showToast('Foto local carregada!', 'info');
+        Store.showToast('Foto carregada!', 'info');
       };
       reader.readAsDataURL(file);
     });
@@ -1310,10 +1399,8 @@
       } else {
         state.services.unshift(payload);
       }
-      await Store.saveState(state);
       closeModal('modal-service');
-      renderAll();
-      Store.showToast(`Serviço "${payload.code}" guardado e sincronizado!`, 'success');
+      await saveOwnerChanges(`Serviço "${payload.code}" guardado e sincronizado!`);
     });
 
     // Office Tab
@@ -1345,10 +1432,8 @@
       } else {
         state.workOrders.unshift(payload);
       }
-      await Store.saveState(state);
       closeModal('modal-workorder');
-      renderAll();
-      Store.showToast(`Folha ${payload.id} guardada.`, 'success');
+      await saveOwnerChanges(`Folha ${payload.id} guardada.`);
     });
 
     document.getElementById('btn-new-booking').addEventListener('click', () => {
@@ -1359,6 +1444,8 @@
       e.preventDefault();
       state.bookings.unshift({
         id: 'AG-' + Date.now().toString().slice(-3),
+        userId: '',
+        username: '',
         client: document.getElementById('bk-client').value.trim(),
         phone: document.getElementById('bk-phone').value.trim(),
         vehicle: document.getElementById('bk-vehicle').value.trim() || 'Por indicar',
@@ -1368,20 +1455,17 @@
         source: 'Secretaria',
         status: 'Confirmada'
       });
-      await Store.saveState(state);
       closeModal('modal-booking');
       e.target.reset();
-      renderAll();
-      Store.showToast('Marcação adicionada à agenda!', 'success');
+      await saveOwnerChanges('Marcação adicionada à agenda!');
     });
 
-    // Quote Builder
     ['q-client-name', 'q-client-phone', 'q-client-nif', 'q-client-email', 'q-vehicle-plate', 'q-vehicle-model', 'q-notes'].forEach(id => {
       document.getElementById(id).addEventListener('input', syncQuoteHeaderInputs);
     });
     document.getElementById('btn-add-extra-part').addEventListener('click', async () => {
       state.quoteDraft.extraParts.push({ name: '', qty: 1, price: 0 });
-      await Store.saveState(state);
+      await Store.saveOwnerState(state, Auth.getOwnerToken());
       renderQuoteBuilder();
     });
     document.getElementById('quote-iva-override').addEventListener('change', renderQuoteBuilder);
@@ -1414,21 +1498,17 @@
         total: Math.round(subtotal * (1 + ivaRate / 100) * 100) / 100,
         createdAt: Store.getTodayISO(0)
       });
-      await Store.saveState(state);
-      renderAll();
+      await saveOwnerChanges('Orçamento convertido em Folha de Obra!');
       switchOfficeSubtab('workorders');
-      Store.showToast('Orçamento convertido em Folha de Obra!', 'success');
     });
     document.getElementById('btn-clear-quote').addEventListener('click', async () => {
       state.quoteDraft = Store.getDefaultState().quoteDraft;
-      await Store.saveState(state);
+      await Store.saveOwnerState(state, Auth.getOwnerToken());
       renderQuoteBuilder();
     });
 
     // Settings Modal
     const openSettingsFn = () => {
-      document.getElementById('cfg-owner-pin').value = state.settings.ownerPin || '1234';
-      document.getElementById('cfg-require-pin').checked = state.settings.requirePin !== false;
       document.getElementById('cfg-gemini-key').value = state.settings.geminiApiKey || '';
       document.getElementById('cfg-gemini-model').value = state.settings.geminiModel || 'gemini-2.5-flash';
       document.getElementById('cfg-use-gemini').checked = Boolean(state.settings.useGemini);
@@ -1438,24 +1518,18 @@
     document.getElementById('btn-assistant-gemini-cfg').addEventListener('click', openSettingsFn);
 
     document.getElementById('btn-save-settings').addEventListener('click', async () => {
-      state.settings.ownerPin = document.getElementById('cfg-owner-pin').value.trim() || '1234';
-      state.settings.requirePin = document.getElementById('cfg-require-pin').checked;
       state.settings.geminiApiKey = document.getElementById('cfg-gemini-key').value.trim();
       state.settings.geminiModel = document.getElementById('cfg-gemini-model').value;
       state.settings.useGemini = document.getElementById('cfg-use-gemini').checked;
-      await Store.saveState(state);
       closeModal('modal-settings');
-      renderAll();
-      Store.showToast('Definições guardadas!', 'success');
+      await saveOwnerChanges('Definições guardadas!');
     });
 
     document.getElementById('btn-clear-sample-data').addEventListener('click', async () => {
       if (!confirm('Isto apaga os clientes, chamadas e folhas de obra fictícias, mantendo os seus preços e regras da IA. Continuar?')) return;
       state = Store.clearSampleData(state);
-      await Store.saveState(state);
       closeModal('modal-settings');
-      renderAll();
-      Store.showToast('Dados fictícios limpos! Os seus preços mantiveram-se.', 'success');
+      await saveOwnerChanges('Dados fictícios limpos!');
     });
 
     document.getElementById('btn-export-json').addEventListener('click', () => {
@@ -1475,10 +1549,8 @@
           const imported = JSON.parse(ev.target.result);
           if (!imported.services) throw new Error('Inválido');
           state = Store.mergeWithDefault(imported);
-          await Store.saveState(state);
           closeModal('modal-settings');
-          renderAll();
-          Store.showToast('Backup restaurado!', 'success');
+          await saveOwnerChanges('Backup restaurado!');
         } catch (_) {
           Store.showToast('Ficheiro de backup inválido.', 'error');
         }
@@ -1486,12 +1558,11 @@
       reader.readAsText(file);
     });
 
-    document.getElementById('btn-reset-data').addEventListener('click', () => {
+    document.getElementById('btn-reset-data').addEventListener('click', async () => {
       if (!confirm('Repor os preços e dados de origem?')) return;
-      state = Store.resetToDefaults();
+      state = Store.getDefaultState();
       closeModal('modal-settings');
-      renderAll();
-      Store.showToast('Dados originais repostos.', 'info');
+      await saveOwnerChanges('Dados originais repostos.');
     });
 
     document.querySelectorAll('[data-close-modal]').forEach(btn => {

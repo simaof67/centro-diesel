@@ -1,14 +1,17 @@
 /* =========================================================================
-   CENTRO DIESEL — Versão Pública do Cliente (index.html + cliente.js)
-   Lê os preços, horários e notas do Dono em tempo real via CentroDieselStore.
+   CENTRO DIESEL — Versão Pública do Cliente + Conta Privada (index.html)
    ========================================================================= */
 
 (function () {
   const Store = window.CentroDieselStore;
+  const Auth = window.CentroDieselAuth;
   const AI = window.CentroDieselAI;
 
-  let state = Store.loadState();
+  let publicState = Store.getDefaultState();
   let selectedCategory = 'Todas';
+  let currentClient = null;
+  let myBookings = [];
+  let myCalls = [];
 
   let clientCall = {
     open: false,
@@ -23,9 +26,39 @@
     recognition: null
   };
 
+  /* =======================================================================
+     VIEW SWITCHING (OFICINA vs A MINHA CONTA)
+     ======================================================================= */
+
+  function showClientView(viewName) {
+    const homeEl = document.getElementById('view-client-home');
+    const acctEl = document.getElementById('view-client-account');
+    const btnHome = document.getElementById('btn-nav-client-home');
+    const btnAcct = document.getElementById('btn-nav-client-account');
+
+    if (viewName === 'account') {
+      homeEl.classList.add('hidden');
+      acctEl.classList.remove('hidden');
+      btnHome.classList.remove('text-amber-400');
+      btnAcct.classList.add('border-amber-500');
+      refreshClientAccount();
+    } else {
+      acctEl.classList.add('hidden');
+      homeEl.classList.remove('hidden');
+      btnHome.classList.add('text-amber-400');
+      btnAcct.classList.remove('border-amber-500');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  /* =======================================================================
+     PUBLIC SITE RENDERING
+     ======================================================================= */
+
   function renderPublicSite() {
-    const w = state.workshop || {};
-    const iva = Number(state.settings.ivaRate || 16);
+    const w = publicState.workshop || {};
+    const iva = Number(publicState.settings.ivaRate || 16);
 
     document.getElementById('client-hero-hours').textContent = w.hours || 'Segunda a Sexta: 08:30 – 12:30 | 14:00 – 18:00';
     document.getElementById('client-iva-badge').textContent = iva;
@@ -36,8 +69,7 @@
     document.getElementById('c-info-email').textContent = w.email || 'mfrcentrodiesel@gmail.com';
     document.getElementById('c-info-hours').textContent = w.hours || '';
 
-    // Owner announcement / AI notes banner
-    const notes = (state.settings.aiNotes || '').trim();
+    const notes = (publicState.settings.aiNotes || '').trim();
     const noticeBox = document.getElementById('client-owner-notice');
     if (notes) {
       noticeBox.classList.remove('hidden');
@@ -47,14 +79,13 @@
     }
 
     renderPublicServices();
-
     if (window.lucide) window.lucide.createIcons();
   }
 
   function renderPublicServices() {
     const search = (document.getElementById('client-price-search').value || '').trim().toLowerCase();
     const showVat = document.getElementById('client-toggle-vat').checked;
-    const iva = Number(state.settings.ivaRate || 16);
+    const iva = Number(publicState.settings.ivaRate || 16);
 
     document.querySelectorAll('.c-cat-pill').forEach(pill => {
       const active = pill.dataset.cat === selectedCategory;
@@ -63,7 +94,7 @@
         : 'c-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200';
     });
 
-    const visibleServices = state.services.filter(s => s.visible !== false);
+    const visibleServices = (publicState.services || []).filter(s => s.visible !== false);
     const filtered = visibleServices.filter(srv => {
       const matchCat = selectedCategory === 'Todas' || srv.category === selectedCategory;
       const matchSearch = !search ||
@@ -124,7 +155,6 @@
       }).join('');
     }
 
-    // Update booking select dropdown
     const selectEl = document.getElementById('c-service');
     const prevVal = selectEl.value;
     selectEl.innerHTML = visibleServices.map(s =>
@@ -139,16 +169,127 @@
   };
 
   /* =======================================================================
+     CLIENT ACCOUNT MANAGEMENT (STRICT ISOLATION)
+     ======================================================================= */
+
+  async function refreshClientAccount() {
+    const data = await Auth.getClientMe();
+    if (data && data.user) {
+      currentClient = data.user;
+      myBookings = data.myBookings || [];
+      myCalls = data.myCalls || [];
+    } else {
+      currentClient = null;
+      myBookings = [];
+      myCalls = [];
+    }
+    renderClientAccountUI();
+  }
+
+  function renderClientAccountUI() {
+    const navLabel = document.getElementById('nav-client-account-label');
+    const authCard = document.getElementById('client-auth-card');
+    const dash = document.getElementById('client-account-dashboard');
+    const bookingPill = document.getElementById('booking-auth-pill');
+
+    if (currentClient) {
+      navLabel.textContent = `@${currentClient.username}`;
+      authCard.classList.add('hidden');
+      dash.classList.remove('hidden');
+
+      bookingPill.textContent = `Sessão ativa: @${currentClient.username}`;
+      bookingPill.classList.remove('hidden');
+
+      // Pre-fill booking and AI forms with authenticated user's own details
+      if (!document.getElementById('c-name').value) document.getElementById('c-name').value = currentClient.fullName || '';
+      if (!document.getElementById('c-phone').value) document.getElementById('c-phone').value = currentClient.phone || '';
+      if (!document.getElementById('c-email').value) document.getElementById('c-email').value = currentClient.email || '';
+      if (!document.getElementById('c-vehicle').value) document.getElementById('c-vehicle').value = currentClient.vehicle || '';
+      document.getElementById('cai-name').value = currentClient.fullName || '';
+      document.getElementById('cai-phone').value = currentClient.phone || '';
+
+      document.getElementById('acct-avatar').textContent = (currentClient.fullName || currentClient.username || 'C').charAt(0).toUpperCase();
+      document.getElementById('acct-fullname').textContent = currentClient.fullName;
+      document.getElementById('acct-username').textContent = `@${currentClient.username}`;
+      document.getElementById('acct-email').textContent = currentClient.email;
+
+      document.getElementById('prof-fullname').value = currentClient.fullName || '';
+      document.getElementById('prof-email').value = currentClient.email || '';
+      document.getElementById('prof-phone').value = currentClient.phone || '';
+      document.getElementById('prof-vehicle').value = currentClient.vehicle || '';
+
+      const bkEl = document.getElementById('acct-my-bookings');
+      if (myBookings.length === 0) {
+        bkEl.innerHTML = `<div class="text-slate-400 italic py-3">Ainda não tem marcações associadas à sua conta.</div>`;
+      } else {
+        bkEl.innerHTML = myBookings.map(b => `
+          <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-slate-900">${Store.escapeHtml(b.date)} às ${Store.escapeHtml(b.time)} • ${Store.escapeHtml(b.vehicle)}</div>
+              <div class="text-slate-600 mt-0.5">${Store.escapeHtml(b.service)}</div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${Store.escapeHtml(b.status)}</span>
+          </div>`).join('');
+      }
+
+      const callsEl = document.getElementById('acct-my-calls');
+      if (myCalls.length === 0) {
+        callsEl.innerHTML = `<div class="text-slate-400 italic py-3">Nenhuma consulta registada na sua conta.</div>`;
+      } else {
+        callsEl.innerHTML = myCalls.map(c => `
+          <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-slate-900">${Store.escapeHtml(c.intent)} • ${Store.escapeHtml(c.timestamp)}</div>
+              <div class="text-slate-600">Viatura: ${Store.escapeHtml(c.vehicle)}</div>
+            </div>
+            <span class="font-extrabold text-emerald-700">${Store.formatMoney(c.quotedTotal)}</span>
+          </div>`).join('');
+      }
+    } else {
+      navLabel.textContent = 'A Minha Conta';
+      dash.classList.add('hidden');
+      authCard.classList.remove('hidden');
+      bookingPill.classList.add('hidden');
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function switchAuthFormTab(mode) {
+    const btnLogin = document.getElementById('tab-btn-login');
+    const btnReg = document.getElementById('tab-btn-register');
+    const formLogin = document.getElementById('form-client-login');
+    const formReg = document.getElementById('form-client-register');
+    document.getElementById('login-error').classList.add('hidden');
+    document.getElementById('reg-error').classList.add('hidden');
+
+    if (mode === 'register') {
+      btnReg.className = 'py-3.5 text-xs font-extrabold text-slate-900 bg-white border-b-2 border-amber-500';
+      btnLogin.className = 'py-3.5 text-xs font-bold text-slate-500 hover:text-slate-800';
+      formLogin.classList.add('hidden');
+      formReg.classList.remove('hidden');
+    } else {
+      btnLogin.className = 'py-3.5 text-xs font-extrabold text-slate-900 bg-white border-b-2 border-amber-500';
+      btnReg.className = 'py-3.5 text-xs font-bold text-slate-500 hover:text-slate-800';
+      formReg.classList.add('hidden');
+      formLogin.classList.remove('hidden');
+    }
+  }
+
+  /* =======================================================================
      CLIENT INTERACTIVE AI PHONE MODAL
      ======================================================================= */
 
   function openClientAIModal() {
     clientCall.open = true;
     document.getElementById('modal-client-ai').classList.remove('hidden');
-    document.getElementById('cai-tts-toggle').checked = state.settings.ttsEnabled !== false;
+    document.getElementById('cai-tts-toggle').checked = publicState.settings.ttsEnabled !== false;
+    if (currentClient) {
+      if (!document.getElementById('cai-name').value) document.getElementById('cai-name').value = currentClient.fullName || '';
+      if (!document.getElementById('cai-phone').value) document.getElementById('cai-phone').value = currentClient.phone || '';
+    }
 
     if (clientCall.messages.length === 0) {
-      const greeting = state.settings.aiGreeting || Store.getDefaultState().settings.aiGreeting;
+      const greeting = publicState.settings.aiGreeting || Store.getDefaultState().settings.aiGreeting;
       clientCall.messages.push({ sender: 'ai', text: greeting });
       renderClientAITranscript();
       speakClientAI(greeting);
@@ -158,9 +299,7 @@
 
   function closeClientAIModal() {
     clientCall.open = false;
-    AI.stopSpeaking(() => {
-      document.getElementById('cai-wave').classList.remove('speaking');
-    });
+    AI.stopSpeaking(() => document.getElementById('cai-wave').classList.remove('speaking'));
     stopClientMic();
     document.getElementById('modal-client-ai').classList.add('hidden');
   }
@@ -190,18 +329,16 @@
             </div>
             <div class="whitespace-pre-line">${Store.escapeHtml(m.text)}</div>
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('');
     box.scrollTop = box.scrollHeight;
 
-    // Quote summary bar
     const quoteBox = document.getElementById('cai-quote-box');
-    const iva = Number(state.settings.ivaRate || 16);
+    const iva = Number(publicState.settings.ivaRate || 16);
     if (clientCall.triage.services.length > 0) {
       quoteBox.classList.remove('hidden');
       const totalVat = clientCall.triage.services.reduce((sum, item) => {
-        const live = state.services.find(s => s.id === item.serviceId);
+        const live = publicState.services.find(s => s.id === item.serviceId);
         const unit = live ? live.price : item.unitPrice;
         return sum + Store.calcWithVat(unit * item.qty, iva);
       }, 0);
@@ -222,7 +359,7 @@
     if (veh) clientCall.triage.vehicle = veh;
     renderClientAITranscript();
 
-    const reply = await AI.generateReply(state, text, clientCall.triage.intent);
+    const reply = await AI.generateReply(publicState, text, clientCall.triage.intent);
     clientCall.triage.intent = reply.intent;
     reply.detectedServices.forEach(item => {
       const existing = clientCall.triage.services.find(s => s.serviceId === item.serviceId);
@@ -240,8 +377,7 @@
     if (clientCall.recognition) {
       try { clientCall.recognition.stop(); } catch (_) {}
     }
-    const wave = document.getElementById('cai-wave');
-    if (wave) wave.classList.remove('listening');
+    document.getElementById('cai-wave')?.classList.remove('listening');
     document.getElementById('cai-mic-label').textContent = 'Falar';
   }
 
@@ -252,7 +388,7 @@
     }
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
-      Store.showToast('O seu navegador não suporta microfone. Escreva a sua pergunta abaixo.', 'warning');
+      Store.showToast('Microfone indisponível neste navegador. Escreva abaixo.', 'warning');
       return;
     }
     AI.stopSpeaking();
@@ -262,10 +398,9 @@
     rec.maxAlternatives = 1;
     clientCall.recognition = rec;
 
-    const wave = document.getElementById('cai-wave');
     rec.onstart = () => {
       clientCall.isListening = true;
-      wave.classList.add('listening');
+      document.getElementById('cai-wave').classList.add('listening');
       document.getElementById('cai-mic-label').textContent = 'A ouvir...';
     };
     rec.onresult = (e) => {
@@ -279,48 +414,130 @@
 
   async function saveClientCallRecord(statusLabel) {
     if (clientCall.messages.length <= 1) return;
-    const callerName = document.getElementById('cai-name').value.trim() || 'Visitante do Site';
-    const callerPhone = document.getElementById('cai-phone').value.trim() || 'Via Web';
-
-    state.calls.unshift({
-      id: 'CH-' + Date.now().toString().slice(-4),
+    const callerName = document.getElementById('cai-name').value.trim() || (currentClient ? currentClient.fullName : 'Visitante do Site');
+    const callerPhone = document.getElementById('cai-phone').value.trim() || (currentClient ? currentClient.phone : 'Via Web');
+    await Store.submitClientCall({
       timestamp: new Date().toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }),
       phone: callerPhone,
       callerName,
       duration: 'Web IA',
       intent: clientCall.triage.intent,
-      vehicle: clientCall.triage.vehicle || 'Não indicada',
+      vehicle: clientCall.triage.vehicle || (currentClient?.vehicle || 'Não indicada'),
       quotedTotal: clientCall.triage.totalWithVat || 0,
       status: statusLabel,
       messages: [...clientCall.messages]
-    });
-    await Store.saveState(state);
+    }, Auth.getClientToken());
+    if (currentClient) await refreshClientAccount();
   }
 
   /* =======================================================================
-     BOOTSTRAP & SYNC
+     BOOTSTRAP
      ======================================================================= */
 
   document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('c-date').value = Store.getTodayISO(1);
 
-    // Sync initial state from server if running via server.ps1
-    const syncRes = await Store.syncFromServer(state);
-    if (syncRes.changed) state = syncRes.state;
+    publicState = await Store.fetchPublicData();
     renderPublicSite();
+    await refreshClientAccount();
 
-    // Real-time sync when Owner edits prices/hours/notes in dono.html
-    Store.subscribeSync(
-      () => state,
+    Store.subscribePublicSync(
+      () => publicState,
       (newState) => {
-        state = newState;
+        publicState = newState;
         renderPublicSite();
         if (clientCall.open) renderClientAITranscript();
         Store.showToast('Preçário atualizado pela oficina!', 'info');
       }
     );
 
-    // Filters
+    // Header navigation
+    document.getElementById('btn-logo-home').addEventListener('click', () => showClientView('home'));
+    document.getElementById('btn-nav-client-home').addEventListener('click', () => showClientView('home'));
+    document.getElementById('btn-back-to-shop').addEventListener('click', () => showClientView('home'));
+    document.getElementById('btn-nav-client-account').addEventListener('click', () => showClientView('account'));
+    document.querySelectorAll('.client-anchor').forEach(a => {
+      a.addEventListener('click', () => showClientView('home'));
+    });
+
+    // Account Tabs & Forms
+    document.getElementById('tab-btn-login').addEventListener('click', () => switchAuthFormTab('login'));
+    document.getElementById('tab-btn-register').addEventListener('click', () => switchAuthFormTab('register'));
+
+    document.getElementById('form-client-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('login-error');
+      errBox.classList.add('hidden');
+      try {
+        await Auth.loginClient(
+          document.getElementById('login-identifier').value,
+          document.getElementById('login-password').value
+        );
+        e.target.reset();
+        await refreshClientAccount();
+        Store.showToast(`Bem-vindo, @${currentClient.username}!`, 'success');
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('form-client-register').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('reg-error');
+      errBox.classList.add('hidden');
+      try {
+        await Auth.registerClient({
+          username: document.getElementById('reg-username').value,
+          fullName: document.getElementById('reg-fullname').value,
+          email: document.getElementById('reg-email').value,
+          phone: document.getElementById('reg-phone').value,
+          vehicle: document.getElementById('reg-vehicle').value,
+          password: document.getElementById('reg-password').value
+        });
+        e.target.reset();
+        await refreshClientAccount();
+        Store.showToast(`Conta @${currentClient.username} criada com sucesso!`, 'success');
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('form-client-profile').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await Auth.updateClientProfile({
+          fullName: document.getElementById('prof-fullname').value,
+          email: document.getElementById('prof-email').value,
+          phone: document.getElementById('prof-phone').value,
+          vehicle: document.getElementById('prof-vehicle').value,
+          currentPassword: document.getElementById('prof-cur-pass').value,
+          newPassword: document.getElementById('prof-new-pass').value
+        });
+        document.getElementById('prof-cur-pass').value = '';
+        document.getElementById('prof-new-pass').value = '';
+        await refreshClientAccount();
+        Store.showToast('Perfil atualizado com segurança!', 'success');
+      } catch (err) {
+        Store.showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('btn-client-logout').addEventListener('click', async () => {
+      await Auth.logoutClient();
+      currentClient = null;
+      myBookings = [];
+      myCalls = [];
+      document.getElementById('c-name').value = '';
+      document.getElementById('c-phone').value = '';
+      document.getElementById('c-email').value = '';
+      document.getElementById('c-vehicle').value = '';
+      renderClientAccountUI();
+      Store.showToast('Sessão terminada.', 'info');
+    });
+
+    // Price Filters
     document.getElementById('client-price-search').addEventListener('input', renderPublicServices);
     document.getElementById('client-toggle-vat').addEventListener('change', renderPublicServices);
     document.querySelectorAll('.c-cat-pill').forEach(pill => {
@@ -330,7 +547,7 @@
       });
     });
 
-    // Booking Form -> Saves directly to shared state for dono.html
+    // Booking Form
     document.getElementById('client-booking-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const client = document.getElementById('c-name').value.trim();
@@ -340,24 +557,27 @@
       const date = document.getElementById('c-date').value || Store.getTodayISO(1);
       const msg = document.getElementById('c-message').value.trim();
 
-      state.bookings.unshift({
-        id: 'AG-' + Date.now().toString().slice(-3),
-        client,
-        phone,
-        vehicle,
-        date,
-        time: '09:30',
-        service: `${service} — "${msg}"`,
-        source: 'Site Cliente',
-        status: 'Pendente'
-      });
-      await Store.saveState(state);
-      e.target.reset();
-      document.getElementById('c-date').value = Store.getTodayISO(1);
-      Store.showToast(`Obrigado, ${client}! O seu pedido entrou na agenda da Centro Diesel.`, 'success');
+      try {
+        await Store.submitClientBooking({
+          client,
+          phone,
+          vehicle,
+          date,
+          time: '09:30',
+          service: `${service} — "${msg}"`,
+          source: 'Site Cliente',
+          status: 'Pendente'
+        }, Auth.getClientToken());
+        e.target.reset();
+        document.getElementById('c-date').value = Store.getTodayISO(1);
+        if (currentClient) await refreshClientAccount();
+        Store.showToast(`Obrigado, ${client}! O seu pedido entrou na agenda da Centro Diesel.`, 'success');
+      } catch (err) {
+        Store.showToast(err.message, 'error');
+      }
     });
 
-    // Client AI Phone Modal Triggers
+    // AI Phone Modal
     ['btn-open-client-ai', 'btn-hero-open-ai', 'btn-card-open-ai', 'btn-fab-ai'].forEach(id => {
       document.getElementById(id).addEventListener('click', openClientAIModal);
     });
@@ -377,13 +597,12 @@
     });
 
     document.getElementById('cai-confirm-booking').addEventListener('click', async () => {
-      const client = document.getElementById('cai-name').value.trim() || 'Cliente Assistente IA';
-      const phone = document.getElementById('cai-phone').value.trim() || 'A confirmar';
-      const vehicle = clientCall.triage.vehicle || 'Viatura a confirmar';
+      const client = document.getElementById('cai-name').value.trim() || (currentClient ? currentClient.fullName : 'Cliente Assistente IA');
+      const phone = document.getElementById('cai-phone').value.trim() || (currentClient ? currentClient.phone : 'A confirmar');
+      const vehicle = clientCall.triage.vehicle || (currentClient?.vehicle || 'Viatura a confirmar');
       const serviceText = clientCall.triage.services.map(s => `${s.qty}x ${s.name}`).join(', ') || clientCall.triage.intent;
 
-      state.bookings.unshift({
-        id: 'AG-' + Date.now().toString().slice(-3),
+      await Store.submitClientBooking({
         client,
         phone,
         vehicle,
@@ -392,7 +611,7 @@
         service: serviceText,
         source: 'Assistente IA (Site)',
         status: 'Confirmada'
-      });
+      }, Auth.getClientToken());
       await saveClientCallRecord('Convertida em Marcação');
       Store.showToast('Pré-marcação enviada para a secretaria da oficina!', 'success');
       closeClientAIModal();
